@@ -1,7 +1,11 @@
 from flask import Flask, render_template, url_for, redirect, request
-
+from flask_wtf import FlaskForm
+from wtforms import EmailField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Length
 
 app = Flask(__name__)
+
+app.config["SECRET_KEY"] = 'aasdasdasdasd87123817231h287h8712bsy1vyv1st1vsfy xasdtqweqwed'
 
 users = [
     {"id": 1, "name": "Joh2n Do1e", "email": "johndoe@example.com"},
@@ -15,6 +19,7 @@ users = [
     {"id": 9, "name": "Grace Lee", "email": "gracelee@example.com"},
     {"id": 10, "name": "Hannah Clark", "email": "hannahclark@example.com"}
 ]
+
 
 @app.route("/home", methods=["GET"])
 @app.route("/", methods=["GET"])
@@ -67,3 +72,22 @@ def remove_numbers(s):
             final_string += letter
     print(f"final string : {final_string}")
     return final_string
+
+
+class LoginForm(FlaskForm):
+    email = EmailField("Email", validators=[DataRequired()], render_kw={"class": "form-control"})
+    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
+                             render_kw={"class": "form-control"})
+    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
+
+
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    form.validate_on_submit()
+    return render_template("login.html", form=form)
+
+
+@app.route('/sign-up', methods=["GET", "POST"])
+def signup():
+    return render_template("signup.html")
