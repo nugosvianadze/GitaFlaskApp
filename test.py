@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for, redirect, request, flash
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import EmailField, PasswordField, SubmitField, FileField
+from wtforms import EmailField, PasswordField, SubmitField, FileField, StringField
 from wtforms.validators import DataRequired, Length
 
 app = Flask(__name__)
@@ -80,7 +80,6 @@ class LoginForm(FlaskForm):
     email = EmailField("Email", validators=[DataRequired()], render_kw={"class": "form-control"})
     password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
                              render_kw={"class": "form-control"})
-    profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired()])
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
 
@@ -93,6 +92,21 @@ def login():
     return render_template("login.html", form=form)
 
 
+class SignUpForm(FlaskForm):
+    email = EmailField("Email", validators=[DataRequired()], render_kw={"class": "form-control"})
+    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
+                             render_kw={"class": "form-control"})
+    name = StringField("Name", validators=[DataRequired()],
+                       render_kw={"class": "form-control"})
+    profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired(),
+                                                                           FileAllowed(["jpg", "png"], "only images allowed!")])
+    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
+
+
 @app.route('/sign-up', methods=["GET", "POST"])
 def signup():
-    return render_template("signup.html")
+    form = SignUpForm()
+    if form.validate_on_submit():
+        flash("You Have Successfully Signed up!", "success")
+        return redirect(url_for('home'))
+    return render_template("signup.html", form=form)
