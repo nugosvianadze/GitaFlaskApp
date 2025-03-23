@@ -5,20 +5,24 @@ Login
 {% endblock %}
 
 {% block content %}
+  {{ super() }}
+
 <div class="container w-25" style="margin-top: 100px">
     <h2 class="text-center">Login</h2>
-    <form action="{{ url_for('login') }}" method="post">
+    <form action="{{ url_for('login') }}" method="post" enctype="multipart/form-data">
         {{ form.csrf_token }}
         <div class="mb-3">
             {{ form.email.label }}
             {{ form.email }}
+
         </div>
         <div class="mb-3">
             {{ form.password.label }}
             {{ form.password }}
-            {% if form.password.errors %}
-            {{ '  '.join(form.password.errors) }}
-            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.profile_picture.label }}
+            {{ form.profile_picture }}
         </div>
         {{ form.submit }}
     </form>

@@ -1,6 +1,7 @@
-from flask import Flask, render_template, url_for, redirect, request
+from flask import Flask, render_template, url_for, redirect, request, flash
 from flask_wtf import FlaskForm
-from wtforms import EmailField, PasswordField, SubmitField
+from flask_wtf.file import FileAllowed
+from wtforms import EmailField, PasswordField, SubmitField, FileField
 from wtforms.validators import DataRequired, Length
 
 app = Flask(__name__)
@@ -24,6 +25,7 @@ users = [
 @app.route("/home", methods=["GET"])
 @app.route("/", methods=["GET"])
 def home():
+
     return render_template("home.html")
 
 
@@ -78,13 +80,16 @@ class LoginForm(FlaskForm):
     email = EmailField("Email", validators=[DataRequired()], render_kw={"class": "form-control"})
     password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
                              render_kw={"class": "form-control"})
+    profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired()])
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
     form = LoginForm()
-    form.validate_on_submit()
+    if form.validate_on_submit():
+        flash("You Have Successfully Logged in!", "success")
+        return redirect(url_for('home'))
     return render_template("login.html", form=form)
 
 
