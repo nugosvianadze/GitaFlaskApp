@@ -10,15 +10,17 @@ Login
 <div class="container w-25" style="margin-top: 100px">
     <h2 class="text-center">Login</h2>
     <form action="{{ url_for('login') }}" method="post" enctype="multipart/form-data">
+        {% from 'macros/_formhelpers.html' import render_field, render_a_tag %}
+
         {{ form.csrf_token }}
         <div class="mb-3">
-            {{ form.email.label }}
-            {{ form.email }}
+             {{ render_field(form.email) }}
+
 
         </div>
         <div class="mb-3">
-            {{ form.password.label }}
-            {{ form.password }}
+            {{ render_field(form.password) }}
+
         </div>
 
         {{ form.submit }}

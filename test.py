@@ -2,7 +2,7 @@ from flask import Flask, render_template, url_for, redirect, request, flash
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
 from wtforms import EmailField, PasswordField, SubmitField, FileField, StringField
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 
 app = Flask(__name__)
 
@@ -77,7 +77,7 @@ def remove_numbers(s):
 
 
 class LoginForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired()], render_kw={"class": "form-control"})
+    email = EmailField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control"})
     password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
                              render_kw={"class": "form-control"})
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
@@ -93,14 +93,21 @@ def login():
 
 
 class SignUpForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired()], render_kw={"class": "form-control"})
-    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
+    email = EmailField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control"})
+    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20),
+                                                     EqualTo('confirm_password',
+                                                             message='Passwords must match')],
                              render_kw={"class": "form-control"})
+    confirm_password = PasswordField('Repeat Password', render_kw={"class": "form-control"})
     name = StringField("Name", validators=[DataRequired()],
                        render_kw={"class": "form-control"})
     profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired(),
                                                                            FileAllowed(["jpg", "png"], "only images allowed!")])
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
+
+    def validate_name(form, field):
+        if not field.data.isalpha():
+            raise ValidationError("Name Must not icludes symbols")
 
 
 @app.route('/sign-up', methods=["GET", "POST"])
