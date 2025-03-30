@@ -1,12 +1,31 @@
-from flask import Flask, render_template, url_for, redirect, request, flash
+import sqlite3
+
+from flask import Flask, render_template, url_for, redirect, request, flash, g
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import EmailField, PasswordField, SubmitField, FileField, StringField
+from wtforms import EmailField, PasswordField, SubmitField, FileField, StringField, IntegerField, DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 
 app = Flask(__name__)
+DATABASE = "my_first_db.sqlite3"
+
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
 
 app.config["SECRET_KEY"] = 'aasdasdasdasd87123817231h287h8712bsy1vyv1st1vsfy xasdtqweqwed'
+
 
 users = [
     {"id": 1, "name": "Joh2n Do1e", "email": "johndoe@example.com"},
@@ -99,21 +118,57 @@ class SignUpForm(FlaskForm):
                                                              message='Passwords must match')],
                              render_kw={"class": "form-control"})
     confirm_password = PasswordField('Repeat Password', render_kw={"class": "form-control"})
-    name = StringField("Name", validators=[DataRequired()],
-                       render_kw={"class": "form-control"})
-    profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired(),
-                                                                           FileAllowed(["jpg", "png"], "only images allowed!")])
+    first_name = StringField("First Name", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    last_name = StringField("Last Name", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    address = StringField("Address", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    age = IntegerField("Age", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    id_number = IntegerField("ID Number", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    birth_date = DateField("Birth Date", validators=[DataRequired()],
+                           render_kw={"class": "form-control"})
+
+    # profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired(),
+    #                                                                        FileAllowed(["jpg", "png"], "only images allowed!")])
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
-    def validate_name(form, field):
+    def validate_first_name(form, field):
         if not field.data.isalpha():
             raise ValidationError("Name Must not icludes symbols")
+
+    def validate_id_number(form, field):
+        if len(str(field.data)) < 9 or len(str(field.data)) > 11:
+            raise ValidationError("ID Number in incorrect, check again!")
 
 
 @app.route('/sign-up', methods=["GET", "POST"])
 def signup():
     form = SignUpForm()
+    print(form.validate_on_submit())
     if form.validate_on_submit():
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # form.data.pop('submit')
+        # form.data.pop('confirm_password')
+        # form.data.pop('csrf_token')
+        # print(form.data.values())
+        # values = form.data.values()
+        # print(*values)
+        cursor.execute(
+            """
+            INSERT INTO users (email, password, first_name, last_name, 
+            address, age, id_number, birth_date)
+            VALUES (?, ?, ?,?, ?, ?, ?, ?);
+            """,
+            (form.email.data, form.password.data, form.first_name.data, form.last_name.data,
+             form.address.data, form.age.data, form.id_number.data, form.birth_date.data)
+        )
+        conn.commit()
+        # conn.close()
         flash("You Have Successfully Signed up!", "success")
-        return redirect(url_for('home'))
+        return render_template("signup.html", form=form)
     return render_template("signup.html", form=form)
