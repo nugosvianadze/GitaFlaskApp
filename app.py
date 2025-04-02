@@ -1,5 +1,7 @@
 import sqlite3
+from random import randint
 
+from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
@@ -8,12 +10,13 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationE
 
 app = Flask(__name__)
 DATABASE = "my_first_db.sqlite3"
-
+faker = Faker("ka_GE")
 
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
     return db
 
 
@@ -27,25 +30,33 @@ def close_connection(exception):
 app.config["SECRET_KEY"] = 'aasdasdasdasd87123817231h287h8712bsy1vyv1st1vsfy xasdtqweqwed'
 
 
-users = [
-    {"id": 1, "name": "Joh2n Do1e", "email": "johndoe@example.com"},
-    {"id": 2, "name": "Jane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane SmithJane Smith", "email": "janesmith@example.com"},
-    {"id": 3, "name": "Alice Johnson", "email": "alicejohnson@example.com"},
-    {"id": 4, "name": "Bob Brown", "email": "bobbrown@example.com"},
-    {"id": 5, "name": "Charlie Davis", "email": "charliedavis@example.com"},
-    {"id": 6, "name": "David Wilson", "email": "davidwilson@example.com"},
-    {"id": 7, "name": "Eve Taylor", "email": "evetaylor@example.com"},
-    {"id": 8, "name": "Frank Moore", "email": "frankmoore@example.com"},
-    {"id": 9, "name": "Grace Lee", "email": "gracelee@example.com"},
-    {"id": 10, "name": "Hannah Clark", "email": "hannahclark@example.com"}
-]
-
-
 @app.route("/home", methods=["GET"])
 @app.route("/", methods=["GET"])
 def home():
 
     return render_template("home.html")
+
+
+@app.route('/generate_fake_data')
+def generate_fake_data():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    for user_id in range(1, 51):
+        cursor.execute(
+            """
+            INSERT INTO users (email, password, first_name, last_name, 
+            address, age, id_number, birth_date)
+            VALUES (?, ?, ?,?, ?, ?, ?, ?);
+            """,
+            (faker.email(), faker.password(), faker.first_name(), faker.last_name(),
+             faker.address(), randint(1, 100), randint(100000000, 99999999999),
+             faker.date())
+        )
+    conn.commit()
+    conn.close()
+    return 'fake data generated successfully'
+
 
 
 @app.route("/welcome/<user_name>", methods=["get"])
@@ -66,16 +77,28 @@ def students_list():
 
 @app.route('/users')
 def get_users():
+    conn = get_db()
+    cursor = conn.cursor()
 
+    users = cursor.execute(
+        """
+        select * from users
+        """
+    ).fetchall()
+    conn.close()
     return render_template("users.html", user_list=users)
 
 
 @app.route('/user_detail/<int:user_id>')
 def user_detail(user_id: int):
-    user_obj = None
-    for user in users:
-        if user['id'] == user_id:
-            user_obj = user
+    conn = get_db()
+    cursor = conn.cursor()
+
+    user_obj = cursor.execute("""
+    select * from users where id = ?
+    """,
+        (user_id, )).fetchone()
+    conn.close()
     return render_template('user_detail.html', user=user_obj)
 
 
@@ -152,12 +175,17 @@ def signup():
         conn = get_db()
         cursor = conn.cursor()
 
-        # form.data.pop('submit')
-        # form.data.pop('confirm_password')
-        # form.data.pop('csrf_token')
-        # print(form.data.values())
-        # values = form.data.values()
-        # print(*values)
+        existing_user = cursor.execute(
+            """
+            select * from users where email = ?
+            """,
+            (form.email.data, )
+        ).fetchone()
+
+        if existing_user:
+            flash(f"User with {form.email.data} already exsits!", 'danger')
+            return render_template("signup.html", form=form)
+
         cursor.execute(
             """
             INSERT INTO users (email, password, first_name, last_name, 
@@ -168,7 +196,7 @@ def signup():
              form.address.data, form.age.data, form.id_number.data, form.birth_date.data)
         )
         conn.commit()
-        # conn.close()
+        conn.close()
         flash("You Have Successfully Signed up!", "success")
-        return render_template("signup.html", form=form)
+        return redirect(url_for("home"))
     return render_template("signup.html", form=form)
