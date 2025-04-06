@@ -30,6 +30,14 @@ def close_connection(exception):
 app.config["SECRET_KEY"] = 'aasdasdasdasd87123817231h287h8712bsy1vyv1st1vsfy xasdtqweqwed'
 
 
+class UserUpdateForm(FlaskForm):
+    first_name = StringField("First Name", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    last_name = StringField("Last Name", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
+
+
 @app.route("/home", methods=["GET"])
 @app.route("/", methods=["GET"])
 def home():
@@ -77,6 +85,7 @@ def students_list():
 
 @app.route('/users')
 def get_users():
+    update_form = UserUpdateForm()
     conn = get_db()
     cursor = conn.cursor()
 
@@ -85,8 +94,60 @@ def get_users():
         select * from users
         """
     ).fetchall()
+    print(users)
     conn.close()
-    return render_template("users.html", user_list=users)
+    return render_template("users.html", user_list=users, update_form=update_form)
+
+
+@app.route('/update_user/<int:user_id>', methods=['POST'])
+def update_user(user_id: int):
+    form = UserUpdateForm()
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if form.validate_on_submit():
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+
+        user_obj = (cursor.execute("""
+            select * from users where id = ?
+            """,
+                                   (user_id,))
+                    .fetchone())
+        if user_obj:
+            cursor.execute("""
+            update users set first_name = ?, last_name = ? where id = ?
+            """, (first_name, last_name, user_id))
+            conn.commit()
+            conn.close()
+            flash(f'user successfully updated : {first_name} {last_name}', 'success')
+            return redirect(url_for('get_users'))
+        flash(f'user with id {user_id} does not exist!')
+        return redirect(url_for('get_users'))
+    return redirect(url_for('get_users'))
+
+
+@app.route('/delete_user/<int:user_id>', methods=['GET'])
+def delete_user(user_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    user_obj = (cursor.execute("""
+                select * from users where id = ?
+                """,
+                               (user_id,))
+                .fetchone())
+    if user_obj:
+        cursor.execute("""
+        delete from users where id = ?
+        """,
+                       (user_id, ))
+        conn.commit()
+        flash(f'user with id {user_id} successfully deleted!', 'success')
+        conn.close()
+        return redirect(url_for('get_users'))
+    flash(f'user with id {user_id} does not exists!')
+    conn.close()
+    return redirect(url_for('get_users'))
 
 
 @app.route('/user_detail/<int:user_id>')
@@ -94,10 +155,11 @@ def user_detail(user_id: int):
     conn = get_db()
     cursor = conn.cursor()
 
-    user_obj = cursor.execute("""
+    user_obj = (cursor.execute("""
     select * from users where id = ?
     """,
-        (user_id, )).fetchone()
+        (user_id, ))
+                .fetchone())
     conn.close()
     return render_template('user_detail.html', user=user_obj)
 

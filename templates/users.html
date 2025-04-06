@@ -5,6 +5,7 @@ Users
 {% endblock %}
 
 {% block content %}
+{{ super() }}
 
 <div class="container mt-4">
         <h2>Users List</h2>
@@ -24,8 +25,64 @@ Users
                     <td>{{ loop.index }}</td>
                     <td>{{ user["first_name"] }} {{ user["last_name"] }}</td>
                     <td>{{ user["email"] }}</td>
-                    <td><a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-info btn-sm">View</a></td>
+                    <td><a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-info btn-sm">View</a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal{{user['id']}}" data-bs-whatever="@mdo">Edit</button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">
+  Delete
+</button>
+                    </td>
                 </tr>
+                <div class="modal fade" id="updateModal{{user['id']}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Updating User {{ user["first_name"] }} {{ user["last_name"] }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form action="{{ url_for('update_user', user_id=user['id']) }}" method="post">
+                                    {% from 'macros/_formhelpers.html' import render_field, render_a_tag %}
+
+                                        {{ update_form.csrf_token }}
+
+                        <div class="mb-3">
+                            {{ render_field(update_form.first_name) }}
+
+                        </div>
+                        <div class="mb-3">
+                            {{ render_field(update_form.last_name) }}
+
+                        </div>
+                        {{ update_form.submit }}
+
+                        </form>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+            <div class="modal fade" id="deleteModal{{user['id']}}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Deleting User</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    Are you sure to delete {{ user["first_name"] }} {{ user["last_name"] }}????
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                    <a class="btn btn-danger" href="{{ url_for('delete_user', user_id=user['id']) }}" role="button">Yes</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {% endfor %}
             </tbody>
         </table>
