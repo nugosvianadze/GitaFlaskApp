@@ -1,23 +1,33 @@
-import sqlite3
 from random import randint
 
 from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
-from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed
-from wtforms import EmailField, PasswordField, SubmitField, FileField, StringField, IntegerField, DateField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from sqlalchemy.orm import Mapped, mapped_column
+
+from config import Config
+from db_utils import get_db
+from extensions import db
+from forms import UserUpdateForm, SignUpForm, LoginForm
 
 app = Flask(__name__)
-DATABASE = "my_first_db.sqlite3"
+app.config.from_object(Config)
 faker = Faker("ka_GE")
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
-    return db
+
+class User(db.Model):
+    __tablename__ = 'user'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(unique=True)
+
+
+@app.template_filter('remove_numbers')
+def remove_numbers(s):
+    final_string = ""
+    for letter in s:
+        if not letter.isnumeric():
+            final_string += letter
+    return final_string
 
 
 @app.teardown_appcontext
@@ -25,17 +35,6 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
-
-app.config["SECRET_KEY"] = 'aasdasdasdasd87123817231h287h8712bsy1vyv1st1vsfy xasdtqweqwed'
-
-
-class UserUpdateForm(FlaskForm):
-    first_name = StringField("First Name", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    last_name = StringField("Last Name", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
 
 @app.route("/home", methods=["GET"])
@@ -66,21 +65,9 @@ def generate_fake_data():
     return 'fake data generated successfully'
 
 
-
 @app.route("/welcome/<user_name>", methods=["get"])
 def welcome(user_name: str = ""):
     return f"Hello {user_name}"
-
-
-@app.route("/students/list")
-def students_list():
-    student_list = [
-        "Nugo", "Giorgi", "Mariami",
-        "Nugo", "Giorgi", "Mariami",
-        "Nugo", "Giorgi", "Mariami",
-    ]
-
-    return render_template("students.html", students=student_list)
 
 
 @app.route('/users')
@@ -94,7 +81,6 @@ def get_users():
         select * from users
         """
     ).fetchall()
-    print(users)
     conn.close()
     return render_template("users.html", user_list=users, update_form=update_form)
 
@@ -169,24 +155,6 @@ def user_list():
     return redirect(url_for('user_detail', user_id=1))
 
 
-@app.template_filter('remove_numbers')
-def remove_numbers(s):
-    print(s)
-    final_string = ""
-    for letter in s:
-        if not letter.isnumeric():
-            final_string += letter
-    print(f"final string : {final_string}")
-    return final_string
-
-
-class LoginForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control"})
-    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
-                             render_kw={"class": "form-control"})
-    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
-
-
 @app.route('/login', methods=["GET", "POST"])
 def login():
     form = LoginForm()
@@ -196,43 +164,9 @@ def login():
     return render_template("login.html", form=form)
 
 
-class SignUpForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control"})
-    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20),
-                                                     EqualTo('confirm_password',
-                                                             message='Passwords must match')],
-                             render_kw={"class": "form-control"})
-    confirm_password = PasswordField('Repeat Password', render_kw={"class": "form-control"})
-    first_name = StringField("First Name", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    last_name = StringField("Last Name", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    address = StringField("Address", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    age = IntegerField("Age", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    id_number = IntegerField("ID Number", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    birth_date = DateField("Birth Date", validators=[DataRequired()],
-                           render_kw={"class": "form-control"})
-
-    # profile_picture = FileField("Upload Your Profile Picture", validators=[DataRequired(),
-    #                                                                        FileAllowed(["jpg", "png"], "only images allowed!")])
-    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
-
-    def validate_first_name(form, field):
-        if not field.data.isalpha():
-            raise ValidationError("Name Must not icludes symbols")
-
-    def validate_id_number(form, field):
-        if len(str(field.data)) < 9 or len(str(field.data)) > 11:
-            raise ValidationError("ID Number in incorrect, check again!")
-
-
 @app.route('/sign-up', methods=["GET", "POST"])
 def signup():
     form = SignUpForm()
-    print(form.validate_on_submit())
     if form.validate_on_submit():
         conn = get_db()
         cursor = conn.cursor()
