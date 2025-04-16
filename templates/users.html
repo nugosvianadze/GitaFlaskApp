@@ -23,9 +23,9 @@ Users
 
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td>{{ user["first_name"] }} {{ user["last_name"] }}</td>
-                    <td>{{ user["email"] }}</td>
-                    <td><a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-info btn-sm">View</a>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user['email'] }}</td>
+                    <td><a href="{{ url_for('user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal{{user['id']}}" data-bs-whatever="@mdo">Edit</button>
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">
   Delete
@@ -36,7 +36,7 @@ Users
                   <div class="modal-dialog">
                     <div class="modal-content">
                       <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="exampleModalLabel">Updating User {{ user["first_name"] }} {{ user["last_name"] }}</h1>
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Updating User {{ user["username"] }}</h1>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                       </div>
                       <div class="modal-body">
@@ -46,11 +46,7 @@ Users
                                         {{ update_form.csrf_token }}
 
                         <div class="mb-3">
-                            {{ render_field(update_form.first_name) }}
-
-                        </div>
-                        <div class="mb-3">
-                            {{ render_field(update_form.last_name) }}
+                            {{ render_field(update_form.username) }}
 
                         </div>
                         {{ update_form.submit }}
@@ -73,7 +69,7 @@ Users
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
-                    Are you sure to delete {{ user["first_name"] }} {{ user["last_name"] }}????
+                    Are you sure to delete {{ user.username }} ????
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
