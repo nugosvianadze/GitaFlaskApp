@@ -2,6 +2,7 @@ from random import randint
 
 from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from config import Config
@@ -11,6 +12,7 @@ from forms import UserUpdateForm, SignUpForm, LoginForm
 
 app = Flask(__name__)
 app.config.from_object(Config)
+db.init_app(app)
 faker = Faker("ka_GE")
 
 
@@ -18,7 +20,30 @@ class User(db.Model):
     __tablename__ = 'user'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(unique=True)
+    email: Mapped[str] = mapped_column(unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(100))
+    address: Mapped[str]
+
+    def __repr__(self):
+        return f'{self.id} - {self.username}'
+
+class Earth(db.Model):
+    __tablename__ = 'earth'
+
+    id = db.Column(db.Integer, primary_key=True)
+    lat = db.Column(db.Float, nullable=False)
+    long = db.Column(db.Float, nullable=False)
+    magnitude = db.Column(db.Float, nullable=False)
+
+
+# with app.app_context():
+#     print('creating tables')
+#     try:
+#         db.create_all()
+#     except Exception as e:
+#         print(f'error while creating tables : {e}')
+#     else:
+#         print("tables creatind successfully")
 
 
 @app.template_filter('remove_numbers')
@@ -46,22 +71,14 @@ def home():
 
 @app.route('/generate_fake_data')
 def generate_fake_data():
-    conn = get_db()
-    cursor = conn.cursor()
 
+    users = []
     for user_id in range(1, 51):
-        cursor.execute(
-            """
-            INSERT INTO users (email, password, first_name, last_name, 
-            address, age, id_number, birth_date)
-            VALUES (?, ?, ?,?, ?, ?, ?, ?);
-            """,
-            (faker.email(), faker.password(), faker.first_name(), faker.last_name(),
-             faker.address(), randint(1, 100), randint(100000000, 99999999999),
-             faker.date())
-        )
-    conn.commit()
-    conn.close()
+        users.append(User(email=faker.email(), username=faker.first_name() + faker.last_name(),
+                    address=faker.address()))
+
+    db.session.add_all(users)
+    db.session.commit()
     return 'fake data generated successfully'
 
 
@@ -73,40 +90,22 @@ def welcome(user_name: str = ""):
 @app.route('/users')
 def get_users():
     update_form = UserUpdateForm()
-    conn = get_db()
-    cursor = conn.cursor()
-
-    users = cursor.execute(
-        """
-        select * from users
-        """
-    ).fetchall()
-    conn.close()
-    return render_template("users.html", user_list=users, update_form=update_form)
+    users = User.query.all()
+    return render_template("users.html", user_list=users,
+                           update_form=update_form)
 
 
 @app.route('/update_user/<int:user_id>', methods=['POST'])
 def update_user(user_id: int):
     form = UserUpdateForm()
-    conn = get_db()
-    cursor = conn.cursor()
 
     if form.validate_on_submit():
-        first_name = form.first_name.data
-        last_name = form.last_name.data
-
-        user_obj = (cursor.execute("""
-            select * from users where id = ?
-            """,
-                                   (user_id,))
-                    .fetchone())
-        if user_obj:
-            cursor.execute("""
-            update users set first_name = ?, last_name = ? where id = ?
-            """, (first_name, last_name, user_id))
-            conn.commit()
-            conn.close()
-            flash(f'user successfully updated : {first_name} {last_name}', 'success')
+        username = form.data['username']
+        user = User.query.get(user_id)
+        if user:
+            user.username = username
+            db.session.commit()
+            flash(f'user successfully updated : {username}', 'success')
             return redirect(url_for('get_users'))
         flash(f'user with id {user_id} does not exist!')
         return redirect(url_for('get_users'))
@@ -115,38 +114,20 @@ def update_user(user_id: int):
 
 @app.route('/delete_user/<int:user_id>', methods=['GET'])
 def delete_user(user_id: int):
-    conn = get_db()
-    cursor = conn.cursor()
-    user_obj = (cursor.execute("""
-                select * from users where id = ?
-                """,
-                               (user_id,))
-                .fetchone())
-    if user_obj:
-        cursor.execute("""
-        delete from users where id = ?
-        """,
-                       (user_id, ))
-        conn.commit()
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
         flash(f'user with id {user_id} successfully deleted!', 'success')
-        conn.close()
         return redirect(url_for('get_users'))
     flash(f'user with id {user_id} does not exists!')
-    conn.close()
     return redirect(url_for('get_users'))
 
 
 @app.route('/user_detail/<int:user_id>')
 def user_detail(user_id: int):
-    conn = get_db()
-    cursor = conn.cursor()
-
-    user_obj = (cursor.execute("""
-    select * from users where id = ?
-    """,
-        (user_id, ))
-                .fetchone())
-    conn.close()
+    user_obj = User.query.get(user_id)
+    print(user_obj)
     return render_template('user_detail.html', user=user_obj)
 
 
