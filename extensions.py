@@ -12,5 +12,5 @@ class Base(DeclarativeBase):
         "pk": "pk_%(table_name)s"
     })
 
-
+# session_options={'autocommit': True} for auto commiting
 db = SQLAlchemy(model_class=Base)

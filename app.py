@@ -24,13 +24,15 @@ class User(db.Model):
     username: Mapped[str] = mapped_column(String(100))
     address: Mapped[str]
 
-    def __repr__(self):
-        return f'{self.id} - {self.username}'
+    # def __repr__(self):
+    #     return f'{self.id} - {self.username}'
+
 
 class Earth(db.Model):
     __tablename__ = 'earth'
 
     id = db.Column(db.Integer, primary_key=True)
+    some_string = db.Column(db.String(100))
     lat = db.Column(db.Float, nullable=False)
     long = db.Column(db.Float, nullable=False)
     magnitude = db.Column(db.Float, nullable=False)
@@ -91,6 +93,7 @@ def welcome(user_name: str = ""):
 def get_users():
     update_form = UserUpdateForm()
     users = User.query.all()
+    print(users)
     return render_template("users.html", user_list=users,
                            update_form=update_form)
 
@@ -104,7 +107,6 @@ def update_user(user_id: int):
         user = User.query.get(user_id)
         if user:
             user.username = username
-            db.session.commit()
             flash(f'user successfully updated : {username}', 'success')
             return redirect(url_for('get_users'))
         flash(f'user with id {user_id} does not exist!')
@@ -117,7 +119,6 @@ def delete_user(user_id: int):
     user = User.query.get(user_id)
     if user:
         db.session.delete(user)
-        db.session.commit()
         flash(f'user with id {user_id} successfully deleted!', 'success')
         return redirect(url_for('get_users'))
     flash(f'user with id {user_id} does not exists!')
@@ -127,7 +128,11 @@ def delete_user(user_id: int):
 @app.route('/user_detail/<int:user_id>')
 def user_detail(user_id: int):
     user_obj = User.query.get(user_id)
-    print(user_obj)
+    # user_obj = User.query.filter_by(id=user_id).first()
+    if not user_obj:
+        print("Object Not Found")
+    else:
+        print(user_obj.username)
     return render_template('user_detail.html', user=user_obj)
 
 
@@ -149,31 +154,20 @@ def login():
 def signup():
     form = SignUpForm()
     if form.validate_on_submit():
-        conn = get_db()
-        cursor = conn.cursor()
+        # data = (form.email.data, form.password.data, form.first_name.data, form.last_name.data,
+        #      form.address.data, form.age.data, form.id_number.data, form.birth_date.data)
 
-        existing_user = cursor.execute(
-            """
-            select * from users where email = ?
-            """,
-            (form.email.data, )
-        ).fetchone()
-
-        if existing_user:
-            flash(f"User with {form.email.data} already exsits!", 'danger')
-            return render_template("signup.html", form=form)
-
-        cursor.execute(
-            """
-            INSERT INTO users (email, password, first_name, last_name, 
-            address, age, id_number, birth_date)
-            VALUES (?, ?, ?,?, ?, ?, ?, ?);
-            """,
-            (form.email.data, form.password.data, form.first_name.data, form.last_name.data,
-             form.address.data, form.age.data, form.id_number.data, form.birth_date.data)
+        new_user = User(
+            email=form.email.data,
+            username=form.first_name.data + " " + form.last_name.data,
+            address=form.address.data
         )
-        conn.commit()
-        conn.close()
+        db.session.add(new_user)
+        db.session.commit()
+        # if existing_user:
+            # flash(f"User with {form.email.data} already exsits!", 'danger')
+            # return render_template("signup.html", form=form)
+
         flash("You Have Successfully Signed up!", "success")
         return redirect(url_for("home"))
     return render_template("signup.html", form=form)
