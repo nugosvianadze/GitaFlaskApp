@@ -1,3 +1,9 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+
 class Config:
-    SECRET_KEY = 'aasdasdasdasd87123817231h287h8712bsy1vyv1st1vsfy xasdtqweqwed'
-    SQLALCHEMY_DATABASE_URI = "sqlite:///my_first_db.sqlite3"
+    SECRET_KEY = os.getenv("SECRET_KEY", "my_secret_key")
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URL")
