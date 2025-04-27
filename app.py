@@ -2,7 +2,7 @@ from random import randint
 
 from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
-from sqlalchemy import String
+from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from config import Config
@@ -24,8 +24,22 @@ class User(db.Model):
     username: Mapped[str] = mapped_column(String(100))
     address: Mapped[str]
 
+    posts = db.relationship('Post', backref='user', cascade='all, delete')
+    # posts = db.relationship('Post', back_populates='user', cascade='all, delete')  # need to def user
+    # relation in post model
+
     # def __repr__(self):
     #     return f'{self.id} - {self.username}'
+
+
+class Post(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(100), nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    image_url = Mapped[str]
+
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    # user = db.relationship('User', back_populates='posts', passive_deletes=True)
 
 
 class Earth(db.Model):
@@ -93,7 +107,6 @@ def welcome(user_name: str = ""):
 def get_users():
     update_form = UserUpdateForm()
     users = User.query.all()
-    print(users)
     return render_template("users.html", user_list=users,
                            update_form=update_form)
 
@@ -154,19 +167,19 @@ def login():
 def signup():
     form = SignUpForm()
     if form.validate_on_submit():
-        # data = (form.email.data, form.password.data, form.first_name.data, form.last_name.data,
-        #      form.address.data, form.age.data, form.id_number.data, form.birth_date.data)
-
+        form_email = form.email.data
+        existing_user = User.query.filter_by(email=form_email).first()
+        # existing_user = User.query.filter(User.email == form_email).first()
+        if existing_user:
+            flash(f"user with email : {form_email}, already exists")
+            return render_template("signup.html", form=form)
         new_user = User(
-            email=form.email.data,
+            email=form_email,
             username=form.first_name.data + " " + form.last_name.data,
             address=form.address.data
         )
         db.session.add(new_user)
         db.session.commit()
-        # if existing_user:
-            # flash(f"User with {form.email.data} already exsits!", 'danger')
-            # return render_template("signup.html", form=form)
 
         flash("You Have Successfully Signed up!", "success")
         return redirect(url_for("home"))
