@@ -2,6 +2,7 @@ from random import randint
 
 from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
+from flask_migrate import Migrate
 from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,6 +15,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 faker = Faker("ka_GE")
+migrate = Migrate(app, db)
 
 
 class User(db.Model):
@@ -36,17 +38,26 @@ class Post(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100), nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    image_url = Mapped[str]
+    image_url:  Mapped[str] = mapped_column(default="/test", server_default="/test")
 
-    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=True)
+
     # user = db.relationship('User', back_populates='posts', passive_deletes=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "image_url": self.image_url,
+            "user_id": self.user_id
+        }
 
 
 class Earth(db.Model):
     __tablename__ = 'earth'
 
     id = db.Column(db.Integer, primary_key=True)
-    some_string = db.Column(db.String(100))
     lat = db.Column(db.Float, nullable=False)
     long = db.Column(db.Float, nullable=False)
     magnitude = db.Column(db.Float, nullable=False)
@@ -184,3 +195,41 @@ def signup():
         flash("You Have Successfully Signed up!", "success")
         return redirect(url_for("home"))
     return render_template("signup.html", form=form)
+
+
+@app.route("/create_post/<int:user_id>", methods=["POST", "GET"])
+def create_post(user_id: int):
+    user = User.query.get(user_id)
+
+    if not user:
+        return f"User with id : {user_id} does not exist!"
+
+    post_title = "First Post"
+    description = "First Post Description First Post Description First Post Description"
+    image_url = "image_url/test"
+
+    posts = []
+    for _ in range(1, 11):
+        posts.append(Post(
+            title=faker.sentence(),
+            description=faker.text(),
+            image_url=faker.image_url(),
+            user_id=user_id
+        ))
+
+    db.session.add_all(posts)
+    db.session.commit()
+
+    return 'fake posts generated successfully'
+
+
+@app.route("/posts/<int:user_id>", methods=["GET"])
+def posts(user_id: int):
+    # get user posts with specific user_id
+    user = User.query.get(user_id)
+
+    if not user:
+        return "user not found"
+        # flash('user not found', category="error")
+        # return render_template("blog/posts.html")
+    return render_template("blog/posts.html", posts=user.posts)

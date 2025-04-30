@@ -10,17 +10,14 @@
   <h1>Posts</h1>
 
   <div class="list-group">
+    {% for post in posts %}
     <a href="post-detail.html" class="list-group-item list-group-item-action">
-      <h5 class="mb-1">Post Title 1</h5>
-      <p class="mb-1">Short description for the post.</p>
+      <h5 class="mb-1">{{ post.title }}</h5>
+      <p class="mb-1">{{ post.description }}</p>
+      <img src="{{ post.image_url}}" alt="{{ post.title }}" height="300" width="500">
       <small><a href="update-post.html" class="btn btn-sm btn-outline-primary">Edit</a></small>
     </a>
-
-    <a href="post-detail.html" class="list-group-item list-group-item-action">
-      <h5 class="mb-1">Post Title 2</h5>
-      <p class="mb-1">Another short description here.</p>
-      <small><a href="update-post.html" class="btn btn-sm btn-outline-primary">Edit</a></small>
-    </a>
+    {% endfor %}
   </div>
 
 </body>

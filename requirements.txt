@@ -3,3 +3,4 @@ flask-wtf
 email_validator
 faker
 python-dotenv
+flask-migrate

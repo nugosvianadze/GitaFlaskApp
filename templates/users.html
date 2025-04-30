@@ -15,6 +15,7 @@ Users
                     <th>Id</th>
                     <th>Full Name</th>
                     <th>Email</th>
+                    <th>Posts</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -25,6 +26,14 @@ Users
                     <td>{{ user.id }}</td>
                     <td>{{ user.username }}</td>
                     <td>{{ user['email'] }}</td>
+                    <td>
+                        {% if user.posts %}
+                        <a href="{{ url_for('posts', user_id=user.id) }}">
+                            {{ user.posts|length }}</a>
+                        {% else %}
+                        0
+                        {% endif %}
+                    </td>
                     <td><a href="{{ url_for('user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal{{user['id']}}" data-bs-whatever="@mdo">Edit</button>
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">
