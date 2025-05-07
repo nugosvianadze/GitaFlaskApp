@@ -1,3 +1,4 @@
+import os
 from random import randint
 
 from faker import Faker
@@ -5,6 +6,7 @@ from flask import Flask, render_template, url_for, redirect, request, flash, g
 from flask_migrate import Migrate
 from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+from werkzeug.utils import secure_filename
 
 from config import Config
 from db_utils import get_db
@@ -26,7 +28,7 @@ class User(db.Model):
     username: Mapped[str] = mapped_column(String(100))
     address: Mapped[str]
 
-    posts = db.relationship('Post', backref='user', cascade='all, delete')
+    posts = db.relationship('Post', backref='user', cascade='all, delete', lazy=True)
     # posts = db.relationship('Post', back_populates='user', cascade='all, delete')  # need to def user
     # relation in post model
 
@@ -200,27 +202,29 @@ def signup():
 @app.route("/create_post/<int:user_id>", methods=["POST", "GET"])
 def create_post(user_id: int):
     user = User.query.get(user_id)
-
     if not user:
         return f"User with id : {user_id} does not exist!"
 
-    post_title = "First Post"
-    description = "First Post Description First Post Description First Post Description"
-    image_url = "image_url/test"
+    if request.method == "GET":
+        return render_template('blog/post_create.html', user_id=user_id)
 
-    posts = []
-    for _ in range(1, 11):
-        posts.append(Post(
-            title=faker.sentence(),
-            description=faker.text(),
-            image_url=faker.image_url(),
-            user_id=user_id
-        ))
+    title = request.form.get('title')
+    description = request.form.get('description')
+    image = request.files.get('image_url')
+    filename = secure_filename(image.filename)
 
-    db.session.add_all(posts)
+    if image:
+        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    new_post = Post(
+        title=title,
+        description=description,
+        image_url=os.path.join(app.config['UPLOAD_FOLDER'], filename) if image else None,
+        user_id=user_id
+    )
+    db.session.add(new_post)
     db.session.commit()
-
-    return 'fake posts generated successfully'
+    flash('post created successfully', 'success')
+    return redirect(url_for('post_detail', post_id=new_post.id))
 
 
 @app.route("/posts/<int:user_id>", methods=["GET"])
@@ -232,4 +236,28 @@ def posts(user_id: int):
         return "user not found"
         # flash('user not found', category="error")
         # return render_template("blog/posts.html")
+    return render_template("blog/posts.html", posts=user.posts)
+
+
+@app.route("/post/<int:post_id>", methods=["GET"])
+def post_detail(post_id: int):
+    post = Post.query.get(post_id)
+
+    if not post:
+        return f"Post with id :{post_id} does not exist!"
+
+    return render_template("blog/post_detail.html", post=post)
+
+
+@app.route('/post_delete/<int:post_id>', methods=["GET"])
+def post_delete(post_id: int):
+    post = Post.query.get(post_id)
+    user = post.user
+    if not post:
+
+        flash(f"Post with id :{post_id} does not exist!")
+        return render_template("blog/posts.html", posts=user.posts)
+    db.session.delete(post)
+    db.session.commit()
+    flash(f"Post with id :{post_id} successfully deleted!", 'success')
     return render_template("blog/posts.html", posts=user.posts)
