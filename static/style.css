@@ -1,4 +1,13 @@
 .errors .error {
 color: red;
 }
-.success
+.post-create {
+display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 40%;
+  }
+.post {
+text-align: center;
+    margin-top: 100px;
+    }

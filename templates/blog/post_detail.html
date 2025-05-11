@@ -7,13 +7,16 @@ Post Detail
 {% block content %}
   {{ super() }}
 
-
+  <div class="post">
   <h1>{{ post.title }}</h1>
 
-  <img src="{{ image_url }}" class="img-fluid mb-3" alt="Post Image">
+    {% if post.image_ur %}
+    <img src="{{ post.image_url }}" class="img-fluid mb-3" alt="Post Image">
+    {% endif %}
+    <p class="lead">{{ post.description }}</p>
 
-  <p class="lead">{{ post.description }}</p>
+    <a href="{{ url_for('posts', user_id=post.user_id) }}" class="btn btn-secondary">Back to List</a>
+    <a href="#" class="btn btn-primary">Edit Post</a>
+  </div>
 
-  <a href="{{ url_for('posts', user_id=post.user_id) }}" class="btn btn-secondary">Back to List</a>
-  <a href="#" class="btn btn-primary">Edit Post</a>
 {% endblock %}

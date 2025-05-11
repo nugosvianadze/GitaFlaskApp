@@ -9,9 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from werkzeug.utils import secure_filename
 
 from config import Config
-from db_utils import get_db
 from extensions import db
-from forms import UserUpdateForm, SignUpForm, LoginForm
+from forms import UserUpdateForm, SignUpForm, LoginForm, CreatePostForm
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -196,35 +195,37 @@ def signup():
 
         flash("You Have Successfully Signed up!", "success")
         return redirect(url_for("home"))
+    print(form.errors, form.form_errors)
     return render_template("signup.html", form=form)
 
 
 @app.route("/create_post/<int:user_id>", methods=["POST", "GET"])
 def create_post(user_id: int):
+    form = CreatePostForm()
     user = User.query.get(user_id)
     if not user:
         return f"User with id : {user_id} does not exist!"
 
-    if request.method == "GET":
-        return render_template('blog/post_create.html', user_id=user_id)
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+        image = form.image_url.data
+        filename = secure_filename(image.filename)
 
-    title = request.form.get('title')
-    description = request.form.get('description')
-    image = request.files.get('image_url')
-    filename = secure_filename(image.filename)
+        if image:
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        new_post = Post(
+            title=title,
+            description=description,
+            image_url=os.path.join(app.config['UPLOAD_FOLDER'], filename) if image else None,
+            user_id=user_id
+        )
+        db.session.add(new_post)
+        db.session.commit()
+        flash('post created successfully', 'success')
+        return redirect(url_for('post_detail', post_id=new_post.id))
 
-    if image:
-        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    new_post = Post(
-        title=title,
-        description=description,
-        image_url=os.path.join(app.config['UPLOAD_FOLDER'], filename) if image else None,
-        user_id=user_id
-    )
-    db.session.add(new_post)
-    db.session.commit()
-    flash('post created successfully', 'success')
-    return redirect(url_for('post_detail', post_id=new_post.id))
+    return render_template('blog/post_create.html', user_id=user_id, form=form)
 
 
 @app.route("/posts/<int:user_id>", methods=["GET"])

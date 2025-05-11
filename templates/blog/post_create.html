@@ -7,26 +7,30 @@ Post Create
 {% block content %}
   {{ super() }}
 
-  <h1>Create a New Post</h1>
+  <h1 style="text-align: center">Create a New Post</h1>
 
-  <form method="post" action="{{ url_for('create_post', user_id=user_id) }}" enctype="multipart/form-data">
+  <div class="post-create">
+    <form method="post" action="{{ url_for('create_post', user_id=user_id) }}" enctype="multipart/form-data">
+    {% from 'macros/_formhelpers.html' import render_field %}
+    {{ form.csrf_token }}
+
     <div class="mb-3">
-      <label for="postTitle" class="form-label">Post Title</label>
-      <input type="text" class="form-control" id="postTitle" placeholder="Enter title" name="title">
+      {{ render_field(form.title) }}
     </div>
 
     <div class="mb-3">
-      <label for="postDescription" class="form-label">Description</label>
-      <textarea class="form-control" id="postDescription" rows="3" placeholder="Write description"
-      name="description"></textarea>
+      {{ render_field(form.description) }}
+
     </div>
 
     <div class="mb-3">
-      <label for="postImage" class="form-label">Upload Image</label>
-      <input class="form-control" type="file" id="postImage" name="image_url">
+      {{ render_field(form.image_url) }}
+
     </div>
 
-    <button type="submit" class="btn btn-primary">Create Post</button>
+    {{ render_field(form.submit) }}
   </form>
+  </div>
+
 
 {% endblock %}
