@@ -1,13 +1,8 @@
+from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField, TextAreaField
+from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField, TextAreaField, SelectMultipleField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
-
-
-class UserUpdateForm(FlaskForm):
-    username = StringField("User Name", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
-    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
 
 class LoginForm(FlaskForm):

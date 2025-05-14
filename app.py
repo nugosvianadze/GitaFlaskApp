@@ -1,16 +1,18 @@
 import os
-from random import randint
 
 from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
 from flask_migrate import Migrate
-from sqlalchemy import String, Text, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from flask_wtf import FlaskForm
+from sqlalchemy import ForeignKey
 from werkzeug.utils import secure_filename
+from wtforms import StringField, SubmitField, SelectMultipleField
+from wtforms.validators import DataRequired
 
 from config import Config
 from extensions import db
-from forms import UserUpdateForm, SignUpForm, LoginForm, CreatePostForm
+from forms import SignUpForm, LoginForm, CreatePostForm
+from models import Role, User, Post
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -19,49 +21,15 @@ faker = Faker("ka_GE")
 migrate = Migrate(app, db)
 
 
-class User(db.Model):
-    __tablename__ = 'user'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(unique=True, nullable=False)
-    username: Mapped[str] = mapped_column(String(100))
-    address: Mapped[str]
+class UserUpdateForm(FlaskForm):
+    with app.app_context():
+        roles = [(role.title, role.title) for role in Role.query.all()]
+    username = StringField("User Name", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    roles = SelectMultipleField('Roles', choices=roles)
+    submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
-    posts = db.relationship('Post', backref='user', cascade='all, delete', lazy=True)
-    # posts = db.relationship('Post', back_populates='user', cascade='all, delete')  # need to def user
-    # relation in post model
-
-    # def __repr__(self):
-    #     return f'{self.id} - {self.username}'
-
-
-class Post(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(100), nullable=True)
-    description: Mapped[str] = mapped_column(Text, nullable=True)
-    image_url:  Mapped[str] = mapped_column(default="/test", server_default="/test")
-
-    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=True)
-
-    # user = db.relationship('User', back_populates='posts', passive_deletes=True)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "description": self.description,
-            "image_url": self.image_url,
-            "user_id": self.user_id
-        }
-
-
-class Earth(db.Model):
-    __tablename__ = 'earth'
-
-    id = db.Column(db.Integer, primary_key=True)
-    lat = db.Column(db.Float, nullable=False)
-    long = db.Column(db.Float, nullable=False)
-    magnitude = db.Column(db.Float, nullable=False)
 
 
 # with app.app_context():
@@ -119,19 +87,29 @@ def welcome(user_name: str = ""):
 def get_users():
     update_form = UserUpdateForm()
     users = User.query.all()
-    return render_template("users.html", user_list=users,
-                           update_form=update_form)
+    roles = Role.query.all()
+    return render_template("user/users.html", user_list=users,
+                           update_form=update_form, roles=roles)
 
 
 @app.route('/update_user/<int:user_id>', methods=['POST'])
 def update_user(user_id: int):
     form = UserUpdateForm()
-
     if form.validate_on_submit():
+        roles = form.roles.data
+
+        roles_from_db = Role.query.filter(
+            Role.title.in_(roles)
+        ).all()
+
         username = form.data['username']
         user = User.query.get(user_id)
         if user:
+            for role in roles_from_db:
+                if role not in user.roles:
+                    user.roles.append(role)
             user.username = username
+            db.session.commit()
             flash(f'user successfully updated : {username}', 'success')
             return redirect(url_for('get_users'))
         flash(f'user with id {user_id} does not exist!')
@@ -158,7 +136,7 @@ def user_detail(user_id: int):
         print("Object Not Found")
     else:
         print(user_obj.username)
-    return render_template('user_detail.html', user=user_obj)
+    return render_template('user/user_detail.html', user=user_obj)
 
 
 @app.route('/user_list')
@@ -172,7 +150,7 @@ def login():
     if form.validate_on_submit():
         flash("You Have Successfully Logged in!", "success")
         return redirect(url_for('home'))
-    return render_template("login.html", form=form)
+    return render_template("user/login.html", form=form)
 
 
 @app.route('/sign-up', methods=["GET", "POST"])
@@ -196,7 +174,7 @@ def signup():
         flash("You Have Successfully Signed up!", "success")
         return redirect(url_for("home"))
     print(form.errors, form.form_errors)
-    return render_template("signup.html", form=form)
+    return render_template("user/signup.html", form=form)
 
 
 @app.route("/create_post/<int:user_id>", methods=["POST", "GET"])
@@ -262,3 +240,16 @@ def post_delete(post_id: int):
     db.session.commit()
     flash(f"Post with id :{post_id} successfully deleted!", 'success')
     return render_template("blog/posts.html", posts=user.posts)
+
+
+@app.route('/add_roles')
+def add_roles():
+    test_roles = ["Admin", "Moderator", "Editor", "Viewer", "Manager", "User"]
+    roles_to_add = []
+    for role in test_roles:
+        new_role = Role(title=role)
+        roles_to_add.append(new_role)
+
+    db.session.add_all(roles_to_add)
+    db.session.commit()
+    return "roles successfully added"
