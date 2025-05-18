@@ -2,12 +2,14 @@ import os
 
 from faker import Faker
 from flask import Flask, render_template, url_for, redirect, request, flash, g
+from flask_bootstrap import Bootstrap4
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from sqlalchemy import ForeignKey
 from werkzeug.utils import secure_filename
-from wtforms import StringField, SubmitField, SelectMultipleField
+from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+from wtforms_sqlalchemy.fields import QuerySelectMultipleField
 
 from config import Config
 from extensions import db
@@ -16,18 +18,23 @@ from models import Role, User, Post
 
 app = Flask(__name__)
 app.config.from_object(Config)
+bootstrap = Bootstrap4(app)
+
 db.init_app(app)
 faker = Faker("ka_GE")
 migrate = Migrate(app, db)
 
 
+def get_roles():
+    return Role.query.all()
 
 class UserUpdateForm(FlaskForm):
-    with app.app_context():
-        roles = [(role.title, role.title) for role in Role.query.all()]
+    # with app.app_context():
+    #     roles = [(role.title, role.title) for role in Role.query.all()]
     username = StringField("User Name", validators=[DataRequired()],
                              render_kw={"class": "form-control"})
-    roles = SelectMultipleField('Roles', choices=roles)
+    # roles = SelectMultipleField('Roles', choices=roles)
+    roles = QuerySelectMultipleField('Roles', query_factory=get_roles)
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
 
@@ -85,11 +92,8 @@ def welcome(user_name: str = ""):
 
 @app.route('/users')
 def get_users():
-    update_form = UserUpdateForm()
     users = User.query.all()
-    roles = Role.query.all()
-    return render_template("user/users.html", user_list=users,
-                           update_form=update_form, roles=roles)
+    return render_template("user/users.html", user_list=users)
 
 
 @app.route('/update_user/<int:user_id>', methods=['POST'])
@@ -98,16 +102,15 @@ def update_user(user_id: int):
     if form.validate_on_submit():
         roles = form.roles.data
 
-        roles_from_db = Role.query.filter(
-            Role.title.in_(roles)
-        ).all()
+        # roles_from_db = Role.query.filter(
+        #     Role.title.in_(roles)
+        # ).all()
 
-        username = form.data['username']
+        username = form.username.data
         user = User.query.get(user_id)
         if user:
-            for role in roles_from_db:
-                if role not in user.roles:
-                    user.roles.append(role)
+            user.roles.clear()
+            user.roles.extend(roles)
             user.username = username
             db.session.commit()
             flash(f'user successfully updated : {username}', 'success')
@@ -131,12 +134,13 @@ def delete_user(user_id: int):
 @app.route('/user_detail/<int:user_id>')
 def user_detail(user_id: int):
     user_obj = User.query.get(user_id)
-    # user_obj = User.query.filter_by(id=user_id).first()
     if not user_obj:
-        print("Object Not Found")
-    else:
-        print(user_obj.username)
-    return render_template('user/user_detail.html', user=user_obj)
+        flash('user not found', 'error')
+        return redirect(url_for('get_users'))
+    update_form = UserUpdateForm(data={"roles": user_obj.roles})
+
+    # user_obj = User.query.filter_by(id=user_id).first()
+    return render_template('user/user_detail.html', user=user_obj, update_form=update_form)
 
 
 @app.route('/user_list')

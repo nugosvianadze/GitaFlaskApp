@@ -18,8 +18,27 @@ User -
             <li class="list-group-item"><strong>Full Name:</strong> {{ user.username }}</li>
             <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
         </ul>
+        <form action="{{ url_for('update_user', user_id=user['id']) }}" method="post">
+<!--                {% from 'macros/_formhelpers.html' import render_field, render_a_tag %}-->
+            {% from 'bootstrap4/form.html' import render_form %}
+
+                    {{ update_form.csrf_token }}
+
+    <div class="mb-3">
+        {{ render_field(update_form.username, value=user.username) }}
+
+    </div>
+        <div class="mb-4">
+    <!--                        {{ render_field(update_form.roles, value=user.roles) }}-->
+        {{ render_field(update_form.roles, class='form-select') }}
+    </div>
+    {{ update_form.submit(value='Update') }}
+
+    </form>
         <a href="{{ url_for('get_users') }}" class="btn btn-secondary mt-3">Back to Users</a>
     </div>
+
+
     {% else %}
 <div class="alert alert-danger" role="alert">
       User With this id does not exist
