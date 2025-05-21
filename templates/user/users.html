@@ -15,6 +15,7 @@ Users
                     <th>Id</th>
                     <th>Full Name</th>
                     <th>Email</th>
+                    <th>Birth Date</th>
                     <th>Posts</th>
                     <th>Roles</th>
                     <th>Actions</th>
@@ -27,6 +28,7 @@ Users
                     <td>{{ user.id }}</td>
                     <td>{{ user.username }}</td>
                     <td>{{ user['email'] }}</td>
+                    <td>{{ user.birth_date.strftime("%Y-%m-%d")  }}</td>
                     <td>
                         {% if user.posts %}
                         <a href="{{ url_for('posts', user_id=user.id) }}">

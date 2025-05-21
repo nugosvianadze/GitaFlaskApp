@@ -1,4 +1,6 @@
-from sqlalchemy import String, Text, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, Text, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from extensions import db
@@ -57,6 +59,7 @@ class User(db.Model):
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(100))
     address: Mapped[str]
+    birth_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=True)
 
     roles = db.relationship('Role', secondary=user_roles_association_table, back_populates='users')
     posts = db.relationship('Post', backref='user', cascade='all, delete', lazy=True)
@@ -66,3 +69,8 @@ class User(db.Model):
     # def __repr__(self):
     #     return f'{self.id} - {self.username}'
 
+"""
+admin_role = Role.query.filter(title="admin")
+print(admin_role.users)
+
+"""

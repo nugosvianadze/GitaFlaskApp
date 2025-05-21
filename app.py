@@ -76,7 +76,7 @@ def home():
 def generate_fake_data():
 
     users = []
-    for user_id in range(1, 51):
+    for user_id in range(1, 5):
         users.append(User(email=faker.email(), username=faker.first_name() + faker.last_name(),
                     address=faker.address()))
 
