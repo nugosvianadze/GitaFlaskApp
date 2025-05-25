@@ -17,6 +17,7 @@ Users
                     <th>Email</th>
                     <th>Birth Date</th>
                     <th>Posts</th>
+                    <th>Profile</th>
                     <th>Roles</th>
                     <th>Actions</th>
                 </tr>
@@ -35,6 +36,13 @@ Users
                             {{ user.posts|length }}</a>
                         {% else %}
                         0
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.profile %}
+                        <a href="{{ url_for('user_profile', user_id=user.id) }}">View Profile</a>
+                        {% else %}
+                        <a href="{{ url_for('create_profile', user_id=user.id) }}">Create Profile</a>
                         {% endif %}
                     </td>
                     <td>{{ user.roles|join(', ') }}</td>

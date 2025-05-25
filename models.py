@@ -5,12 +5,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from extensions import db
 
-
 user_roles_association_table = db.Table('user_roles',
-                             db.Model.metadata,
-                             db.Column('role_id', db.Integer, ForeignKey('role.id')),
-                             db.Column('user_id', db.Integer, ForeignKey('user.id'))
-                             )
+                                        db.Model.metadata,
+                                        db.Column('role_id', db.Integer, ForeignKey('role.id')),
+                                        db.Column('user_id', db.Integer, ForeignKey('user.id'))
+                                        )
+
 
 class Role(db.Model):
     __tablename__ = 'role'
@@ -23,11 +23,12 @@ class Role(db.Model):
     def __repr__(self):
         return self.title
 
+
 class Post(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100), nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    image_url:  Mapped[str] = mapped_column(default="/test", server_default="/test")
+    image_url: Mapped[str] = mapped_column(default="/test", server_default="/test")
 
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=True)
 
@@ -63,14 +64,18 @@ class User(db.Model):
 
     roles = db.relationship('Role', secondary=user_roles_association_table, back_populates='users')
     posts = db.relationship('Post', backref='user', cascade='all, delete', lazy=True)
+    profile = db.relationship('Profile', uselist=False, backref='user', cascade='all, delete')
     # posts = db.relationship('Post', back_populates='user', cascade='all, delete')  # need to def user
     # relation in post model
 
     # def __repr__(self):
     #     return f'{self.id} - {self.username}'
+    # user.profile
+    # profile.user
 
-"""
-admin_role = Role.query.filter(title="admin")
-print(admin_role.users)
 
-"""
+class Profile(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    bio = db.Column(db.Text, nullable=True)
+
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), unique=True)

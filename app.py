@@ -9,12 +9,15 @@ from sqlalchemy import ForeignKey
 from werkzeug.utils import secure_filename
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+from wtforms_alchemy import ModelForm
 from wtforms_sqlalchemy.fields import QuerySelectMultipleField
+from wtforms_sqlalchemy.orm import model_form
 
 from config import Config
 from extensions import db
 from forms import SignUpForm, LoginForm, CreatePostForm
-from models import Role, User, Post
+from models import Role, User, Post, Profile
+from utils import find_and_validate_user
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -23,7 +26,9 @@ bootstrap = Bootstrap4(app)
 db.init_app(app)
 faker = Faker("ka_GE")
 migrate = Migrate(app, db)
-
+class UserProfileForm(ModelForm):
+    class Meta:
+        model = Profile
 
 def get_roles():
     return Role.query.all()
@@ -214,7 +219,7 @@ def create_post(user_id: int):
 def posts(user_id: int):
     # get user posts with specific user_id
     user = User.query.get(user_id)
-
+    print(user.profile)
     if not user:
         return "user not found"
         # flash('user not found', category="error")
@@ -257,3 +262,47 @@ def add_roles():
     db.session.add_all(roles_to_add)
     db.session.commit()
     return "roles successfully added"
+
+
+@app.route('/create_profile/<int:user_id>', methods=["GET", "POST"])
+def create_profile(user_id: int):
+    user = User.query.get(user_id)
+    find_and_validate_user(user, user_id)
+
+    form = UserProfileForm()
+    if request.method == "POST":
+        if form.validate():
+            bio = request.form.get('bio')
+            # profile = Profile(bio=form.bio.data,
+            #                   user_id=user_id)
+            # db.session.add(profile)
+            # db.session.commit()
+            profile = Profile(bio=bio)
+            user.profile = profile
+            db.session.commit()
+            flash('Profile Successfully Created!', 'success')
+            return redirect(url_for('user_profile', user_id=user_id))
+    return render_template('user/create_profile.html',
+                           form=form, user=user)
+
+@app.route('/user_profile/<int:user_id>')
+def user_profile(user_id: int):
+    user = User.query.get(user_id)
+    find_and_validate_user(user, user_id)
+    return render_template("user/profile.html", user=user)
+
+@app.route('/update_profile/<int:user_id>', methods=["POST", "GET"])
+def update_profile(user_id: int):
+    user = User.query.get(user_id)
+    find_and_validate_user(user, user_id)
+    form = UserProfileForm(data={'bio': user.profile.bio})
+
+    if request.method == 'POST':
+        if form.validate():
+            bio = request.form.get('bio')
+            user.profile.bio = bio
+            db.session.commit()
+            flash('Profile Successfully Updated!', 'success')
+            return redirect(url_for('user_profile', user_id=user_id))
+
+    return render_template('user/edit_profile.html', form=form, user=user)
