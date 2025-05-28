@@ -13,7 +13,7 @@
                  {% if request.path != '/users' %}
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('get_users') }}">Users</a></li>
                 {% endif %}
-                <li class="nav-item"><a class="nav-link btn btn-danger text-black" href="">Sign Out</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-danger text-black" href="{{ url_for('sign_out') }}">Sign Out</a></li>
                  {% if request.path != '/login' %}
                     <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('login') }}">Login</a></li>
                 {% endif %}

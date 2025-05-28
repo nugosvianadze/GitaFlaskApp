@@ -10,7 +10,7 @@ user_roles_association_table = db.Table('user_roles',
                                         db.Column('role_id', db.Integer, ForeignKey('role.id')),
                                         db.Column('user_id', db.Integer, ForeignKey('user.id'))
                                         )
-
+from uuid import uuid4
 
 class Role(db.Model):
     __tablename__ = 'role'
@@ -58,6 +58,7 @@ class User(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(250), nullable=False, server_default=str(uuid4()))
     username: Mapped[str] = mapped_column(String(100))
     address: Mapped[str]
     birth_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=True)

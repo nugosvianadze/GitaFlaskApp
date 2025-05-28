@@ -19,6 +19,7 @@ User Profile
         <h5>About Me</h5>
         {% if user.profile.bio %}
         <p> {{user.profile.bio}}</p>
+        <a class="nav-link btn btn-danger" href="{{ url_for('delete_profile', user_id=user.id) }}">Delete Profile</a>
         {% else %}
         <p class="text-muted">No bio yet.</p>
         {% endif %}

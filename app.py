@@ -1,17 +1,15 @@
 import os
 
 from faker import Faker
-from flask import Flask, render_template, url_for, redirect, request, flash, g
+from flask import Flask, render_template, url_for, redirect, request, flash, g, session
 from flask_bootstrap import Bootstrap4
 from flask_migrate import Migrate
 from flask_wtf import FlaskForm
-from sqlalchemy import ForeignKey
 from werkzeug.utils import secure_filename
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from wtforms_alchemy import ModelForm
 from wtforms_sqlalchemy.fields import QuerySelectMultipleField
-from wtforms_sqlalchemy.orm import model_form
 
 from config import Config
 from extensions import db
@@ -26,22 +24,25 @@ bootstrap = Bootstrap4(app)
 db.init_app(app)
 faker = Faker("ka_GE")
 migrate = Migrate(app, db)
+
+
 class UserProfileForm(ModelForm):
     class Meta:
         model = Profile
 
+
 def get_roles():
     return Role.query.all()
+
 
 class UserUpdateForm(FlaskForm):
     # with app.app_context():
     #     roles = [(role.title, role.title) for role in Role.query.all()]
     username = StringField("User Name", validators=[DataRequired()],
-                             render_kw={"class": "form-control"})
+                           render_kw={"class": "form-control"})
     # roles = SelectMultipleField('Roles', choices=roles)
     roles = QuerySelectMultipleField('Roles', query_factory=get_roles)
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
-
 
 
 # with app.app_context():
@@ -73,17 +74,15 @@ def close_connection(exception):
 @app.route("/home", methods=["GET"])
 @app.route("/", methods=["GET"])
 def home():
-
     return render_template("home.html")
 
 
 @app.route('/generate_fake_data')
 def generate_fake_data():
-
     users = []
     for user_id in range(1, 5):
         users.append(User(email=faker.email(), username=faker.first_name() + faker.last_name(),
-                    address=faker.address()))
+                          address=faker.address()))
 
     db.session.add_all(users)
     db.session.commit()
@@ -155,8 +154,21 @@ def user_list():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+    if 'email' in session:
+        print(session.get('email'))
+        flash("You already  Logged in!", "success")
+
+        return redirect(url_for('home'))
+
     form = LoginForm()
     if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        user = User.query.filter_by(email=email, password=password).first()
+        if not user:
+            flash('Invalid Credentials!')
+            return render_template("user/login.html", form=form)
+        session['email'] = email
         flash("You Have Successfully Logged in!", "success")
         return redirect(url_for('home'))
     return render_template("user/login.html", form=form)
@@ -242,7 +254,6 @@ def post_delete(post_id: int):
     post = Post.query.get(post_id)
     user = post.user
     if not post:
-
         flash(f"Post with id :{post_id} does not exist!")
         return render_template("blog/posts.html", posts=user.posts)
     db.session.delete(post)
@@ -285,11 +296,13 @@ def create_profile(user_id: int):
     return render_template('user/create_profile.html',
                            form=form, user=user)
 
+
 @app.route('/user_profile/<int:user_id>')
 def user_profile(user_id: int):
     user = User.query.get(user_id)
     find_and_validate_user(user, user_id)
     return render_template("user/profile.html", user=user)
+
 
 @app.route('/update_profile/<int:user_id>', methods=["POST", "GET"])
 def update_profile(user_id: int):
@@ -306,3 +319,24 @@ def update_profile(user_id: int):
             return redirect(url_for('user_profile', user_id=user_id))
 
     return render_template('user/edit_profile.html', form=form, user=user)
+
+
+@app.route('/delete_profile/<int:user_id>')
+def delete_profile(user_id: int):
+    user = User.query.get(user_id)
+    find_and_validate_user(user, user_id)
+    if not user.profile:
+        flash("User does not have profile")
+        return redirect(url_for('get_users'))
+    # db.session.delete(user.profile)
+    user.profile = None
+    db.session.commit()
+    flash(f"user {user.username}'s profile successfully deleted!", "success")
+    return redirect(url_for('user_profile', user_id=user_id))
+
+
+@app.route('/sign_out')
+def sign_out():
+    email = session.pop('email')
+    flash(f"user {email} succ logged out!", "success")
+    return redirect(url_for('login'))
