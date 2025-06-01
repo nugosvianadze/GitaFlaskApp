@@ -6,16 +6,14 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                 {% if request.path != '/' %}
-
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
-                {% endif %}
-                 {% if request.path != '/users' %}
+                {% if 'email' in session %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('my_profile') }}">My Posts</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('get_users') }}">Users</a></li>
-                {% endif %}
                 <li class="nav-item"><a class="nav-link btn btn-danger text-black" href="{{ url_for('sign_out') }}">Sign Out</a></li>
-                 {% if request.path != '/login' %}
-                    <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('login') }}">Login</a></li>
+                {% endif %}
+                {% if request.path != '/login' and 'email' not in session  %}
+                <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('login') }}">Login</a></li>
                 {% endif %}
             </ul>
         </div>

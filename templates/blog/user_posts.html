@@ -1,25 +1,29 @@
 {% extends 'components/base.html' %}
 
 {% block title %}
-Posts
+{{ user.username }} Posts
 {% endblock %}
 
 {% block content %}
   {{ super() }}
 
 
-  <h1>Posts</h1>
+  <h1 style="text-align:center;">{{ user.username }} Posts</h1>
 
   <div class="list-group" style="margin: auto;
   width: 50%;
   padding: 10px;">
-    {% for post in posts %}
+    {% for post in user.posts %}
     <a href="{{ url_for('post_detail', post_id=post.id) }}" class="list-group-item list-group-item-action">
       <h5 class="mb-1">{{ post.title }}</h5>
       <p class="mb-1">{{ post.description }}</p>
       <img src="{{ post.image_url}}" alt="{{ post.title }}" height="300" width="500">
 
+      <div style="text-align:center;">
+        <small><a href="update-post.html" class="btn btn-sm btn-outline-primary">Edit</a></small>
+        <small><a class="btn btn-danger" href="{{ url_for('post_delete', post_id=post.id) }}" role="button">Delete</a></small>
 
+      </div>
     </a>
     {% endfor %}
   </div>

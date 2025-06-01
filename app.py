@@ -251,15 +251,29 @@ def post_detail(post_id: int):
 
 @app.route('/post_delete/<int:post_id>', methods=["GET"])
 def post_delete(post_id: int):
+
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    email = session.get('email')
+
     post = Post.query.get(post_id)
+
+    if not post:
+        return redirect(url_for('my_profile'))
+
     user = post.user
+
+    if user.email != email:
+        flash('You are not allowed to do this action!')
+        return redirect(url_for('my_profile'))
+
     if not post:
         flash(f"Post with id :{post_id} does not exist!")
         return render_template("blog/posts.html", posts=user.posts)
     db.session.delete(post)
     db.session.commit()
     flash(f"Post with id :{post_id} successfully deleted!", 'success')
-    return render_template("blog/posts.html", posts=user.posts)
+    return redirect(url_for('my_profile'))
 
 
 @app.route('/add_roles')
@@ -278,7 +292,7 @@ def add_roles():
 @app.route('/create_profile/<int:user_id>', methods=["GET", "POST"])
 def create_profile(user_id: int):
     user = User.query.get(user_id)
-    find_and_validate_user(user, user_id)
+    find_and_validate_user(user)
 
     form = UserProfileForm()
     if request.method == "POST":
@@ -300,14 +314,14 @@ def create_profile(user_id: int):
 @app.route('/user_profile/<int:user_id>')
 def user_profile(user_id: int):
     user = User.query.get(user_id)
-    find_and_validate_user(user, user_id)
+    find_and_validate_user(user)
     return render_template("user/profile.html", user=user)
 
 
 @app.route('/update_profile/<int:user_id>', methods=["POST", "GET"])
 def update_profile(user_id: int):
     user = User.query.get(user_id)
-    find_and_validate_user(user, user_id)
+    find_and_validate_user(user)
     form = UserProfileForm(data={'bio': user.profile.bio})
 
     if request.method == 'POST':
@@ -324,7 +338,7 @@ def update_profile(user_id: int):
 @app.route('/delete_profile/<int:user_id>')
 def delete_profile(user_id: int):
     user = User.query.get(user_id)
-    find_and_validate_user(user, user_id)
+    find_and_validate_user(user)
     if not user.profile:
         flash("User does not have profile")
         return redirect(url_for('get_users'))
@@ -335,8 +349,18 @@ def delete_profile(user_id: int):
     return redirect(url_for('user_profile', user_id=user_id))
 
 
+@app.route('/my_profile')
+def my_profile():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    email = session.get('email')
+    user = User.query.filter_by(email=email).first()
+    find_and_validate_user(user)
+
+    return render_template('blog/user_posts.html', user=user)
+
+
 @app.route('/sign_out')
 def sign_out():
-    email = session.pop('email')
-    flash(f"user {email} succ logged out!", "success")
+    email = session.pop('email', None)
     return redirect(url_for('login'))
