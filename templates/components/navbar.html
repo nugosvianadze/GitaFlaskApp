@@ -14,6 +14,8 @@
                 {% endif %}
                 {% if request.path != '/login' and 'email' not in session  %}
                 <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('login') }}">Login</a></li>
+                <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('signup') }}">Sign Up</a></li>
+
                 {% endif %}
             </ul>
         </div>

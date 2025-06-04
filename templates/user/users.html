@@ -42,15 +42,25 @@ Users
                         {% if user.profile %}
                         <a href="{{ url_for('user_profile', user_id=user.id) }}">View Profile</a>
                         {% else %}
-                        <a href="{{ url_for('create_profile', user_id=user.id) }}">Create Profile</a>
+                             {% if user.email == session['email'] %}
+                                    <a href="{{ url_for('create_profile', user_id=user.id) }}">Create Profile</a>
+                            {% else %}
+                                No Profile
+                            {% endif %}
                         {% endif %}
+
                     </td>
                     <td>{{ user.roles|join(', ') }}</td>
-                    <td><a href="{{ url_for('user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
-                    <a class="btn btn-success" href="{{ url_for('create_post', user_id=user.id) }}" role="button">Create Post</a>
-                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">
-  Delete
-</button>
+
+                    <td>
+                        {% if user.email == session['email'] %}
+                            <a href="{{ url_for('user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
+                            <a class="btn btn-success" href="{{ url_for('create_post', user_id=user.id) }}" role="button">Create Post</a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">
+                              Delete
+                            </button>
+                        {% endif %}
+
                     </td>
                 </tr>
 

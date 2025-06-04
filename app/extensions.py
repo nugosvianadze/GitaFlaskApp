@@ -1,3 +1,6 @@
+from faker import Faker
+from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
@@ -14,3 +17,6 @@ class Base(DeclarativeBase):
 
 # session_options={'autocommit': True} for auto commiting
 db = SQLAlchemy(model_class=Base)
+faker = Faker("ka_GE")
+migrate = Migrate()
+bcrypt = Bcrypt()

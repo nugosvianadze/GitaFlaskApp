@@ -1,9 +1,10 @@
-from flask import current_app
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed
-from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
-from wtforms_sqlalchemy.orm import model_form
+from wtforms import StringField, SubmitField, EmailField, PasswordField
+from wtforms.validators import DataRequired, Email, Length, ValidationError
+from wtforms_alchemy import ModelForm
+from wtforms_sqlalchemy.fields import QuerySelectMultipleField
+
+from app.models.user import Profile
 
 
 class LoginForm(FlaskForm):
@@ -15,16 +16,13 @@ class LoginForm(FlaskForm):
 
 class SignUpForm(FlaskForm):
     email = EmailField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control"})
-    # password = PasswordField("Password", validators=[DataRequired(), Length(4, 20),
-    #                                                  EqualTo('confirm_password',
-    #                                                          message='Passwords must match')],
-    #                          render_kw={"class": "form-control"})
-    # confirm_password = PasswordField('Repeat Password', render_kw={"class": "form-control"})
     first_name = StringField("First Name", validators=[DataRequired()],
                              render_kw={"class": "form-control"})
     last_name = StringField("Last Name", validators=[DataRequired()],
                              render_kw={"class": "form-control"})
     address = StringField("Address", validators=[DataRequired()],
+                             render_kw={"class": "form-control"})
+    password = PasswordField("Password", validators=[DataRequired(), Length(4, 20)],
                              render_kw={"class": "form-control"})
     # age = IntegerField("Age", validators=[DataRequired()],
     #                          render_kw={"class": "form-control"})
@@ -46,22 +44,20 @@ class SignUpForm(FlaskForm):
         if len(str(field.data)) < 9 or len(str(field.data)) > 11:
             raise ValidationError("ID Number in incorrect, check again!")
 
+def get_roles():
+    from app.models.user import Role
 
-class CreatePostForm(FlaskForm):
-    title = StringField("Title", render_kw={"class": "form-control"})
-    description = TextAreaField("Description", render_kw={"class": "form-control"})
-    image_url = FileField("Image Url", validators=[FileAllowed(['jpg', 'png', 'gif', 'webp'],
-                                                               'Images only!')])
+    return Role.query.all()
+
+class UserUpdateForm(FlaskForm):
+    # with app.app_context():
+    #     roles = [(role.title, role.title) for role in Role.query.all()]
+    username = StringField("User Name", validators=[DataRequired()],
+                           render_kw={"class": "form-control"})
+    # roles = SelectMultipleField('Roles', choices=roles)
+    roles = QuerySelectMultipleField('Roles', query_factory=get_roles)
     submit = SubmitField(render_kw={"class": "btn btn-primary w-100"})
 
-    # def validate(self, extra_validators=None):
-    #     image = self.data.get('image_url').read()
-    #     title, description = self.data.get('title'), self.data.get('description')
-    #     fields = [title, image, description]
-    #     if not any(fields):
-    #         # self.errors["field_validation"] = "u must provide one field"
-    #         raise ValidationError("u must provide one field")
-
-    def validate_description(self, title):
-        if not title.data:
-            raise ValidationError("Provide Description!")
+class UserProfileForm(ModelForm):
+    class Meta:
+        model = Profile
