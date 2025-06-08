@@ -48,6 +48,7 @@ class User(db.Model):
     # profile.user
 
     def authenticate(self, password, bcrypt):
+
         return bcrypt.check_password_hash(self.password, password)
 
     @staticmethod

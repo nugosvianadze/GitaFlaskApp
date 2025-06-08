@@ -32,7 +32,7 @@ Users
                     <td>{{ user.birth_date.strftime("%Y-%m-%d")  }}</td>
                     <td>
                         {% if user.posts %}
-                        <a href="{{ url_for('posts', user_id=user.id) }}">
+                        <a href="{{ url_for('blog.posts', user_id=user.id) }}">
                             {{ user.posts|length }}</a>
                         {% else %}
                         0
@@ -40,10 +40,10 @@ Users
                     </td>
                     <td>
                         {% if user.profile %}
-                        <a href="{{ url_for('user_profile', user_id=user.id) }}">View Profile</a>
+                        <a href="{{ url_for('user.user_profile', user_id=user.id) }}">View Profile</a>
                         {% else %}
                              {% if user.email == session['email'] %}
-                                    <a href="{{ url_for('create_profile', user_id=user.id) }}">Create Profile</a>
+                                    <a href="{{ url_for('user.create_profile', user_id=user.id) }}">Create Profile</a>
                             {% else %}
                                 No Profile
                             {% endif %}
@@ -54,8 +54,8 @@ Users
 
                     <td>
                         {% if user.email == session['email'] %}
-                            <a href="{{ url_for('user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
-                            <a class="btn btn-success" href="{{ url_for('create_post', user_id=user.id) }}" role="button">Create Post</a>
+                            <a href="{{ url_for('user.user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
+                            <a class="btn btn-success" href="{{ url_for('blog.create_post', user_id=user.id) }}" role="button">Create Post</a>
                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">
                               Delete
                             </button>
@@ -76,7 +76,7 @@ Users
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                    <a class="btn btn-danger" href="{{ url_for('delete_user', user_id=user['id']) }}" role="button">Yes</a>
+                    <a class="btn btn-danger" href="{{ url_for('user.delete_user', user_id=user['id']) }}" role="button">Yes</a>
                   </div>
                 </div>
               </div>

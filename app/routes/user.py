@@ -1,4 +1,15 @@
-@app.route('/create_profile/<int:user_id>', methods=["GET", "POST"])
+from flask import render_template, redirect, Blueprint, session, url_for, flash, request
+
+from app.extensions import db, bcrypt
+from app.forms.user import UserProfileForm, UserUpdateForm, LoginForm, SignUpForm
+from app.models.user import User, Profile
+from app.utils.decorator import login_required
+from app.utils.user import find_and_validate_user
+
+user_bp = Blueprint("user", __name__, template_folder='user', url_prefix='/user')
+
+
+@user_bp.route('/create_profile/<int:user_id>', methods=["GET", "POST"])
 def create_profile(user_id: int):
     user = User.query.get(user_id)
     find_and_validate_user(user)
@@ -15,19 +26,19 @@ def create_profile(user_id: int):
             user.profile = profile
             db.session.commit()
             flash('Profile Successfully Created!', 'success')
-            return redirect(url_for('user_profile', user_id=user_id))
+            return redirect(url_for('user.user_profile', user_id=user_id))
     return render_template('user/create_profile.html',
                            form=form, user=user)
 
 
-@app.route('/user_profile/<int:user_id>')
+@user_bp.route('/user_profile/<int:user_id>')
 def user_profile(user_id: int):
     user = User.query.get(user_id)
     find_and_validate_user(user)
     return render_template("user/profile.html", user=user)
 
 
-@app.route('/update_profile/<int:user_id>', methods=["POST", "GET"])
+@user_bp.route('/update_profile/<int:user_id>', methods=["POST", "GET"])
 def update_profile(user_id: int):
     user = User.query.get(user_id)
     find_and_validate_user(user)
@@ -39,29 +50,29 @@ def update_profile(user_id: int):
             user.profile.bio = bio
             db.session.commit()
             flash('Profile Successfully Updated!', 'success')
-            return redirect(url_for('user_profile', user_id=user_id))
+            return redirect(url_for('user.user_profile', user_id=user_id))
 
     return render_template('user/edit_profile.html', form=form, user=user)
 
 
-@app.route('/delete_profile/<int:user_id>')
+@user_bp.route('/delete_profile/<int:user_id>')
 def delete_profile(user_id: int):
     user = User.query.get(user_id)
     find_and_validate_user(user)
     if not user.profile:
         flash("User does not have profile")
-        return redirect(url_for('get_users'))
+        return redirect(url_for('user.get_users'))
     # db.session.delete(user.profile)
     user.profile = None
     db.session.commit()
     flash(f"user {user.username}'s profile successfully deleted!", "success")
-    return redirect(url_for('user_profile', user_id=user_id))
+    return redirect(url_for('user.user_profile', user_id=user_id))
 
 
-@app.route('/my_profile')
+@user_bp.route('/my_profile')
 def my_profile():
     if 'email' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('user.login'))
     email = session.get('email')
     user = User.query.filter_by(email=email).first()
     find_and_validate_user(user)
@@ -69,18 +80,20 @@ def my_profile():
     return render_template('blog/user_posts.html', user=user)
 
 
-@app.route('/sign_out')
+@user_bp.route('/sign_out')
 def sign_out():
     email = session.pop('email', None)
-    return redirect(url_for('login'))
+    return redirect(url_for('user.login'))
 
-@app.route('/users')
+
+@user_bp.route('/users')
+@login_required
 def get_users():
     users = User.query.all()
     return render_template("user/users.html", user_list=users)
 
 
-@app.route('/update_user/<int:user_id>', methods=['POST'])
+@user_bp.route('/update_user/<int:user_id>', methods=['POST'])
 def update_user(user_id: int):
     form = UserUpdateForm()
     if form.validate_on_submit():
@@ -98,50 +111,52 @@ def update_user(user_id: int):
             user.username = username
             db.session.commit()
             flash(f'user successfully updated : {username}', 'success')
-            return redirect(url_for('get_users'))
+            return redirect(url_for('user.get_users'))
         flash(f'user with id {user_id} does not exist!')
-        return redirect(url_for('get_users'))
-    return redirect(url_for('get_users'))
+        return redirect(url_for('user.get_users'))
+    return redirect(url_for('user.get_users'))
 
 
-@app.route('/delete_user/<int:user_id>', methods=['GET'])
+@user_bp.route('/delete_user/<int:user_id>', methods=['GET'])
 def delete_user(user_id: int):
     user = User.query.get(user_id)
     if user:
         db.session.delete(user)
         flash(f'user with id {user_id} successfully deleted!', 'success')
-        return redirect(url_for('get_users'))
+        return redirect(url_for('user.get_users'))
     flash(f'user with id {user_id} does not exists!')
-    return redirect(url_for('get_users'))
+    return redirect(url_for('user.get_users'))
 
 
-@app.route('/user_detail/<int:user_id>')
+@user_bp.route('/user_detail/<int:user_id>')
 def user_detail(user_id: int):
     user_obj = User.query.get(user_id)
     if not user_obj:
         flash('user not found', 'error')
-        return redirect(url_for('get_users'))
+        return redirect(url_for('user.get_users'))
     update_form = UserUpdateForm(data={"roles": user_obj.roles})
 
     # user_obj = User.query.filter_by(id=user_id).first()
     return render_template('user/user_detail.html', user=user_obj, update_form=update_form)
 
 
-@app.route('/user_list')
+@user_bp.route('/user_list')
 def user_list():
-    return redirect(url_for('user_detail', user_id=1))
+    return redirect(url_for('user.user_detail', user_id=1))
 
 
-@app.route('/login', methods=["GET", "POST"])
-def login():
+@user_bp.route('/login', methods=["GET", "POST"])
+def login(**kwargs):
+    next_url = request.args.get('next')
     if 'email' in session:
         print(session.get('email'))
         flash("You already  Logged in!", "success")
 
-        return redirect(url_for('home'))
+        return redirect(url_for('blog.home'))
 
     form = LoginForm()
     if form.validate_on_submit():
+        next_url = request.form.get('next')
         email = form.email.data
         password = form.password.data
         user = User.query.filter_by(email=email).first()
@@ -153,11 +168,13 @@ def login():
             return render_template("user/login.html", form=form)
         session['email'] = email
         flash("You Have Successfully Logged in!", "success")
-        return redirect(url_for('home'))
-    return render_template("user/login.html", form=form)
+        if next_url:
+            return redirect(next_url)
+        return redirect(url_for('blog.home'))
+    return render_template("user/login.html", form=form, next=next_url)
 
 
-@app.route('/sign-up', methods=["GET", "POST"])
+@user_bp.route('/sign-up', methods=["GET", "POST"])
 def signup():
     form = SignUpForm()
     if form.validate_on_submit():

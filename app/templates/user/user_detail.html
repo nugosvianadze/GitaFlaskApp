@@ -18,7 +18,7 @@ User -
             <li class="list-group-item"><strong>Full Name:</strong> {{ user.username }}</li>
             <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
         </ul>
-        <form action="{{ url_for('update_user', user_id=user['id']) }}" method="post">
+        <form action="{{ url_for('user.update_user', user_id=user['id']) }}" method="post">
                 {% from 'macros/_formhelpers.html' import render_field, render_a_tag %}
 <!--            {% from 'bootstrap4/form.html' import render_form %}-->
 
@@ -35,7 +35,7 @@ User -
     {{ update_form.submit(value='Update') }}
 
     </form>
-        <a href="{{ url_for('get_users') }}" class="btn btn-secondary mt-3">Back to Users</a>
+        <a href="{{ url_for('user.get_users') }}" class="btn btn-secondary mt-3">Back to Users</a>
     </div>
 
 

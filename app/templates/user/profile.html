@@ -20,7 +20,7 @@ User Profile
         {% if user.profile.bio %}
         <p> {{user.profile.bio}}</p>
         {% if user.email == session['email'] %}
-        <a class="nav-link btn btn-danger" href="{{ url_for('delete_profile', user_id=user.id) }}">Delete Profile</a>
+        <a class="nav-link btn btn-danger" href="{{ url_for('user.delete_profile', user_id=user.id) }}">Delete Profile</a>
         {%endif%}
         {% else %}
         <p class="text-muted">No bio yet.</p>
@@ -29,7 +29,7 @@ User Profile
               {% if user.email == session['email'] %}
 
       <div class="card-footer text-end">
-        <a href="{{ url_for('update_profile', user_id=user.id) }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('user.update_profile', user_id=user.id) }}" class="btn btn-outline-secondary">
           <i class="bi bi-pencil-fill"></i> Edit Profile
         </a>
       </div>

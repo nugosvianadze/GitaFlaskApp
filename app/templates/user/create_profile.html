@@ -8,7 +8,7 @@ Create Profile
 {{ super() }}
   <div class="container mt-5" style="max-width: 600px;">
     <h2 class="mb-4 text-center">Create Your Profile – {{ user.username }}</h2>
-    <form method="post" action="{{ url_for('create_profile', user_id=user.id) }}">
+    <form method="post" action="{{ url_for('user.create_profile', user_id=user.id) }}">
       {{ form.csrf_token }}
                 {% from 'macros/_formhelpers.html' import render_field %}
 

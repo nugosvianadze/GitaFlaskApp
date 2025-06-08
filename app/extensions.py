@@ -1,5 +1,6 @@
 from faker import Faker
 from flask_bcrypt import Bcrypt
+from flask_bootstrap import Bootstrap4
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
@@ -20,3 +21,4 @@ db = SQLAlchemy(model_class=Base)
 faker = Faker("ka_GE")
 migrate = Migrate()
 bcrypt = Bcrypt()
+bootstrap = Bootstrap4()

@@ -14,7 +14,7 @@ Posts
   width: 50%;
   padding: 10px;">
     {% for post in posts %}
-    <a href="{{ url_for('post_detail', post_id=post.id) }}" class="list-group-item list-group-item-action">
+    <a href="{{ url_for('blog.post_detail', post_id=post.id) }}" class="list-group-item list-group-item-action">
       <h5 class="mb-1">{{ post.title }}</h5>
       <p class="mb-1">{{ post.description }}</p>
       <img src="{{ post.image_url}}" alt="{{ post.title }}" height="300" width="500">

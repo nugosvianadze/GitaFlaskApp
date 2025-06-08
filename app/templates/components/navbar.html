@@ -6,15 +6,15 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('blog.home') }}">Home</a></li>
                 {% if 'email' in session %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('my_profile') }}">My Posts</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('get_users') }}">Users</a></li>
-                <li class="nav-item"><a class="nav-link btn btn-danger text-black" href="{{ url_for('sign_out') }}">Sign Out</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('user.my_profile') }}">My Posts</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('user.get_users') }}">Users</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-danger text-black" href="{{ url_for('user.sign_out') }}">Sign Out</a></li>
                 {% endif %}
                 {% if request.path != '/login' and 'email' not in session  %}
-                <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('login') }}">Login</a></li>
-                <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('signup') }}">Sign Up</a></li>
+                <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('user.login') }}">Login</a></li>
+                <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('user.signup') }}">Sign Up</a></li>
 
                 {% endif %}
             </ul>

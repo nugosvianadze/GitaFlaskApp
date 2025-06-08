@@ -3,12 +3,13 @@ import os
 from flask import render_template, redirect, Blueprint, session, url_for, flash
 from werkzeug.utils import secure_filename
 
+from app import Config
 from app.extensions import db
 from app.forms.post import CreatePostForm
 from app.models.post import Post
 from app.models.user import Role, User
 
-blog_bp = Blueprint("blog", __name__, template_folder='blog', url_prefix='/blog')
+blog_bp = Blueprint("blog", __name__, url_prefix='/blog', template_folder='templates')
 
 
 @blog_bp.route('/add_roles')
@@ -38,17 +39,17 @@ def create_post(user_id: int):
         filename = secure_filename(image.filename)
 
         if image:
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image.save(os.path.join(Config.UPLOAD_FOLDER, filename))
         new_post = Post(
             title=title,
             description=description,
-            image_url=os.path.join(app.config['UPLOAD_FOLDER'], filename) if image else None,
+            image_url=os.path.join(Config.UPLOAD_FOLDER, filename) if image else None,
             user_id=user_id
         )
         db.session.add(new_post)
         db.session.commit()
         flash('post created successfully', 'success')
-        return redirect(url_for('post_detail', post_id=new_post.id))
+        return redirect(url_for('blog.post_detail', post_id=new_post.id))
 
     return render_template('blog/post_create.html', user_id=user_id, form=form)
 
@@ -79,19 +80,19 @@ def post_detail(post_id: int):
 def post_delete(post_id: int):
 
     if 'email' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('user.login'))
     email = session.get('email')
 
     post = Post.query.get(post_id)
 
     if not post:
-        return redirect(url_for('my_profile'))
+        return redirect(url_for('user.my_profile'))
 
     user = post.user
 
     if user.email != email:
         flash('You are not allowed to do this action!')
-        return redirect(url_for('my_profile'))
+        return redirect(url_for('user.my_profile'))
 
     if not post:
         flash(f"Post with id :{post_id} does not exist!")
@@ -99,9 +100,9 @@ def post_delete(post_id: int):
     db.session.delete(post)
     db.session.commit()
     flash(f"Post with id :{post_id} successfully deleted!", 'success')
-    return redirect(url_for('my_profile'))
+    return redirect(url_for('user.my_profile'))
 
 @blog_bp.route("/home", methods=["GET"])
 @blog_bp.route("/", methods=["GET"])
 def home():
-    return render_template("home.html")
+    return render_template("blog/home.html")

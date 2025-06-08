@@ -1,7 +1,4 @@
-from datetime import datetime
-
-from flask_bcrypt import Bcrypt
-from sqlalchemy import String, Text, ForeignKey, DateTime, func
+from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.extensions import db
