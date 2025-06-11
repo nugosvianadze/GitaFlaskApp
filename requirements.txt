@@ -6,3 +6,4 @@ python-dotenv
 flask-migrate
 wtforms-sqlalchemy
 bootstrap-flask
+flask-login

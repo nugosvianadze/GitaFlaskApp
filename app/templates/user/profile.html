@@ -19,21 +19,28 @@ User Profile
         <h5>About Me</h5>
         {% if user.profile.bio %}
         <p> {{user.profile.bio}}</p>
-        {% if user.email == session['email'] %}
-        <a class="nav-link btn btn-danger" href="{{ url_for('user.delete_profile', user_id=user.id) }}">Delete Profile</a>
+        {% if user.email == current_user.email %}
+        <a class="nav-link btn btn-danger" href="{{ url_for('user.delete_profile') }}">Delete Profile</a>
         {%endif%}
         {% else %}
         <p class="text-muted">No bio yet.</p>
         {% endif %}
       </div>
-              {% if user.email == session['email'] %}
+        {% if user.email == current_user.email %}
 
-      <div class="card-footer text-end">
-        <a href="{{ url_for('user.update_profile', user_id=user.id) }}" class="btn btn-outline-secondary">
-          <i class="bi bi-pencil-fill"></i> Edit Profile
-        </a>
-      </div>
+              {% if current_user.profile %}
+                <div class="card-footer text-end">
+                  <a href="{{ url_for('user.update_profile') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-pencil-fill"></i> Edit Profile
+                  </a>
+                </div>
+              {% else %}
+                <div class="card-footer text-end">
+                  <a href="{{ url_for('user.create_profile', user_id=user.id) }}" class="btn btn-outline-secondary">Create Profile</a>
+
+                </div>
               {%endif%}
+        {%endif%}
     </div>
   </div>
 {% endblock %}

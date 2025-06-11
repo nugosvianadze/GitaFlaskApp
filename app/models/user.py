@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask_bcrypt import Bcrypt
+from flask_login import UserMixin
 from sqlalchemy import String, Text, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,7 +27,7 @@ class Role(db.Model):
         return self.title
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
 
     id: Mapped[int] = mapped_column(primary_key=True)

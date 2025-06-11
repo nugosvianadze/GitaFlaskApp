@@ -7,12 +7,12 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('blog.home') }}">Home</a></li>
-                {% if 'email' in session %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('user.my_profile') }}">My Posts</a></li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('user.my_posts') }}">My Posts</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('user.get_users') }}">Users</a></li>
                 <li class="nav-item"><a class="nav-link btn btn-danger text-black" href="{{ url_for('user.sign_out') }}">Sign Out</a></li>
                 {% endif %}
-                {% if request.path != '/login' and 'email' not in session  %}
+                {% if request.path != '/login' and current_user.is_anonymous  %}
                 <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('user.login') }}">Login</a></li>
                 <li class="nav-item"><a class="nav-link text-black" href="{{ url_for('user.signup') }}">Sign Up</a></li>
 

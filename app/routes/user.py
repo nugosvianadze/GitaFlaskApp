@@ -1,18 +1,25 @@
-from flask import render_template, redirect, Blueprint, session, url_for, flash, request
+from datetime import timedelta
 
-from app.extensions import db, bcrypt
+from flask import render_template, redirect, Blueprint, session, url_for, flash, request
+from flask_login import login_user, logout_user, login_required, current_user
+
+from app.extensions import db, bcrypt, login_manager
 from app.forms.user import UserProfileForm, UserUpdateForm, LoginForm, SignUpForm
 from app.models.user import User, Profile
-from app.utils.decorator import login_required
 from app.utils.user import find_and_validate_user
 
 user_bp = Blueprint("user", __name__, template_folder='user', url_prefix='/user')
 
 
-@user_bp.route('/create_profile/<int:user_id>', methods=["GET", "POST"])
-def create_profile(user_id: int):
-    user = User.query.get(user_id)
-    find_and_validate_user(user)
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+
+@user_bp.route('/create_profile', methods=["GET", "POST"])
+@login_required
+def create_profile():
+    user = current_user
 
     form = UserProfileForm()
     if request.method == "POST":
@@ -26,7 +33,7 @@ def create_profile(user_id: int):
             user.profile = profile
             db.session.commit()
             flash('Profile Successfully Created!', 'success')
-            return redirect(url_for('user.user_profile', user_id=user_id))
+            return redirect(url_for('user.user_profile', user_id=user.id))
     return render_template('user/create_profile.html',
                            form=form, user=user)
 
@@ -38,10 +45,10 @@ def user_profile(user_id: int):
     return render_template("user/profile.html", user=user)
 
 
-@user_bp.route('/update_profile/<int:user_id>', methods=["POST", "GET"])
-def update_profile(user_id: int):
-    user = User.query.get(user_id)
-    find_and_validate_user(user)
+@user_bp.route('/update_profile', methods=["POST", "GET"])
+@login_required
+def update_profile():
+    user = current_user
     form = UserProfileForm(data={'bio': user.profile.bio})
 
     if request.method == 'POST':
@@ -50,39 +57,34 @@ def update_profile(user_id: int):
             user.profile.bio = bio
             db.session.commit()
             flash('Profile Successfully Updated!', 'success')
-            return redirect(url_for('user.user_profile', user_id=user_id))
+            return redirect(url_for('user.user_profile'))
 
     return render_template('user/edit_profile.html', form=form, user=user)
 
 
-@user_bp.route('/delete_profile/<int:user_id>')
-def delete_profile(user_id: int):
-    user = User.query.get(user_id)
-    find_and_validate_user(user)
+@user_bp.route('/delete_profile')
+def delete_profile():
+    user = current_user
     if not user.profile:
-        flash("User does not have profile")
+        flash("You dont have profile")
         return redirect(url_for('user.get_users'))
     # db.session.delete(user.profile)
     user.profile = None
     db.session.commit()
     flash(f"user {user.username}'s profile successfully deleted!", "success")
-    return redirect(url_for('user.user_profile', user_id=user_id))
+    return redirect(url_for('user.user_profile', user_id=user.id))
 
 
-@user_bp.route('/my_profile')
-def my_profile():
-    if 'email' not in session:
-        return redirect(url_for('user.login'))
-    email = session.get('email')
-    user = User.query.filter_by(email=email).first()
-    find_and_validate_user(user)
-
-    return render_template('blog/user_posts.html', user=user)
+@user_bp.route('/my_posts')
+@login_required
+def my_posts():
+    return render_template('blog/user_posts.html')
 
 
 @user_bp.route('/sign_out')
 def sign_out():
-    email = session.pop('email', None)
+    # email = session.pop('email', None)
+    logout_user()
     return redirect(url_for('user.login'))
 
 
@@ -156,7 +158,7 @@ def login(**kwargs):
 
     form = LoginForm()
     if form.validate_on_submit():
-        next_url = request.form.get('next')
+        next_url = request.form.get('next', None)
         email = form.email.data
         password = form.password.data
         user = User.query.filter_by(email=email).first()
@@ -166,10 +168,12 @@ def login(**kwargs):
         if not user.authenticate(password, bcrypt):
             flash('Wrong Password! Try Again!')
             return render_template("user/login.html", form=form)
-        session['email'] = email
+        # session['email'] = email
+        login_user(user, remember=True, duration=timedelta(days=7))
         flash("You Have Successfully Logged in!", "success")
-        if next_url:
+        if next_url != "None":
             return redirect(next_url)
+
         return redirect(url_for('blog.home'))
     return render_template("user/login.html", form=form, next=next_url)
 

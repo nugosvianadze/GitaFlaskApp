@@ -2,7 +2,7 @@ from functools import wraps
 from flask import session, redirect, url_for, request
 
 
-def login_required(f):
+def custom_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'email' not in session:

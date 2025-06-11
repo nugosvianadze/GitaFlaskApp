@@ -42,7 +42,7 @@ Users
                         {% if user.profile %}
                         <a href="{{ url_for('user.user_profile', user_id=user.id) }}">View Profile</a>
                         {% else %}
-                             {% if user.email == session['email'] %}
+                             {% if user.email == current_user.email %}
                                     <a href="{{ url_for('user.create_profile', user_id=user.id) }}">Create Profile</a>
                             {% else %}
                                 No Profile
@@ -53,7 +53,7 @@ Users
                     <td>{{ user.roles|join(', ') }}</td>
 
                     <td>
-                        {% if user.email == session['email'] %}
+                        {% if user.email == current_user.email %}
                             <a href="{{ url_for('user.user_detail', user_id=user.id) }}" class="btn btn-info btn-sm">View</a>
                             <a class="btn btn-success" href="{{ url_for('blog.create_post', user_id=user.id) }}" role="button">Create Post</a>
                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{user['id']}}">

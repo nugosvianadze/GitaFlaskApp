@@ -7,8 +7,8 @@ Edit Profile
 {% block content %}
 {{ super() }}
   <div class="container mt-5" style="max-width: 600px;">
-    <h2 class="mb-4 text-center">Edit Profile Of : {{ user.username }} </h2>
-    <form method="post" action="{{ url_for('user.update_profile', user_id=user.id) }}">
+    <h2 class="mb-4 text-center">Edit Profile Of : {{ current_user.username }} </h2>
+    <form method="post" action="{{ url_for('user.update_profile') }}">
       {{ form.csrf_token }}
                 {% from 'macros/_formhelpers.html' import render_field %}
 
@@ -17,7 +17,7 @@ Edit Profile
       </div>
 
       <div class="d-flex justify-content-between">
-        <a href="{{ url_for('user.user_profile', user_id=user.id) }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ url_for('user.user_profile', user_id=current_user.id) }}" class="btn btn-secondary">Cancel</a>
         <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </form>

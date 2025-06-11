@@ -1,6 +1,7 @@
 import os
 
 from flask import render_template, redirect, Blueprint, session, url_for, flash
+from flask_login import login_required
 from werkzeug.utils import secure_filename
 
 from app import Config
@@ -13,6 +14,7 @@ blog_bp = Blueprint("blog", __name__, url_prefix='/blog', template_folder='templ
 
 
 @blog_bp.route('/add_roles')
+@login_required
 def add_roles():
     test_roles = ["Admin", "Moderator", "Editor", "Viewer", "Manager", "User"]
     roles_to_add = []
@@ -26,6 +28,7 @@ def add_roles():
 
 
 @blog_bp.route("/create_post/<int:user_id>", methods=["POST", "GET"])
+@login_required
 def create_post(user_id: int):
     form = CreatePostForm()
     user = User.query.get(user_id)
@@ -55,6 +58,7 @@ def create_post(user_id: int):
 
 
 @blog_bp.route("/posts/<int:user_id>", methods=["GET"])
+@login_required
 def posts(user_id: int):
     # get user posts with specific user_id
     user = User.query.get(user_id)
@@ -67,6 +71,7 @@ def posts(user_id: int):
 
 
 @blog_bp.route("/post/<int:post_id>", methods=["GET"])
+@login_required
 def post_detail(post_id: int):
     post = Post.query.get(post_id)
 
@@ -77,6 +82,7 @@ def post_detail(post_id: int):
 
 
 @blog_bp.route('/post_delete/<int:post_id>', methods=["GET"])
+@login_required
 def post_delete(post_id: int):
 
     if 'email' not in session:
@@ -86,13 +92,13 @@ def post_delete(post_id: int):
     post = Post.query.get(post_id)
 
     if not post:
-        return redirect(url_for('user.my_profile'))
+        return redirect(url_for('user.my_posts'))
 
     user = post.user
 
     if user.email != email:
         flash('You are not allowed to do this action!')
-        return redirect(url_for('user.my_profile'))
+        return redirect(url_for('user.my_posts'))
 
     if not post:
         flash(f"Post with id :{post_id} does not exist!")
@@ -100,7 +106,7 @@ def post_delete(post_id: int):
     db.session.delete(post)
     db.session.commit()
     flash(f"Post with id :{post_id} successfully deleted!", 'success')
-    return redirect(url_for('user.my_profile'))
+    return redirect(url_for('user.my_posts'))
 
 @blog_bp.route("/home", methods=["GET"])
 @blog_bp.route("/", methods=["GET"])

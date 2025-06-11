@@ -7,7 +7,7 @@ Post Create
 {% block content %}
   {{ super() }}
 
-  <h1 style="text-align: center">Create a New Post</h1>
+  <h1 style="text-align: center">Create a New Post for {{ current_user.username }}</h1>
 
   <div class="post-create">
     <form method="post" action="{{ url_for('blog.create_post', user_id=user_id) }}" enctype="multipart/form-data">

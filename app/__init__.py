@@ -2,7 +2,7 @@ from flask import Flask
 
 from app.models.post import Post
 from app.models.user import User, Profile, Role
-from app.extensions import migrate, bcrypt, faker, db, bootstrap
+from app.extensions import migrate, bcrypt, faker, db, bootstrap, login_manager
 from app.config import Config
 from app.routes.user import user_bp
 from app.routes.blog import blog_bp
@@ -20,7 +20,7 @@ def register_extensions(app):
     bcrypt.init_app(app)
     db.init_app(app)
     bootstrap.init_app(app)
-
+    login_manager.init_app(app)
 
 def create_app() -> Flask:
     app = Flask(__name__)

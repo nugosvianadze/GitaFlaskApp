@@ -1,24 +1,26 @@
 {% extends 'components/base.html' %}
 
 {% block title %}
-{{ user.username }} Posts
+{{ current_user.username }} Posts
 {% endblock %}
 
 {% block content %}
   {{ super() }}
 
 
-  <h1 style="text-align:center;">{{ user.username }} Posts</h1>
+  <h1 style="text-align:center;">{{ current_user.username }} Posts</h1>
 
+  {% if current_user.posts %}
   <div class="list-group" style="margin: auto;
   width: 50%;
   padding: 10px;">
-    {% for post in user.posts %}
+    {% for post in current_user.posts %}
     <a href="{{ url_for('blog.post_detail', post_id=post.id) }}" class="list-group-item list-group-item-action">
       <h5 class="mb-1">{{ post.title }}</h5>
       <p class="mb-1">{{ post.description }}</p>
+      {% if post.image_url != "/test" %}
       <img src="{{ post.image_url}}" alt="{{ post.title }}" height="300" width="500">
-
+      {% endif %}
       <div style="text-align:center;">
         <small><a href="update-post.html" class="btn btn-sm btn-outline-primary">Edit</a></small>
         <small><a class="btn btn-danger" href="{{ url_for('blog.post_delete', post_id=post.id) }}" role="button">Delete</a></small>
@@ -27,5 +29,10 @@
     </a>
     {% endfor %}
   </div>
+  {% else %}
+    <h1 style="text-align: center;">No Posts Available!</h1>
+  {% endif %}
+  <a class="btn btn-success" href="{{ url_for('blog.create_post', user_id=current_user.id) }}"
+     role="button" style="margin-left: 47%">Create Post</a>
 
 {% endblock %}
