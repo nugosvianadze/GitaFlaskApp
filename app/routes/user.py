@@ -200,6 +200,5 @@ def signup():
         db.session.commit()
 
         flash("You Have Successfully Signed up!", "success")
-        return redirect(url_for("home"))
-    print(form.errors, form.form_errors)
+        return redirect(url_for("blog.home"))
     return render_template("user/signup.html", form=form)
