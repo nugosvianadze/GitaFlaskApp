@@ -24,7 +24,7 @@ def register_extensions(app):
 
 
 def create_app() -> Flask:
-    app = Flask(__name__, static_folder=Config.STATIC_FOLDER)
+    app = Flask(__name__)
 
     app.config.from_object(Config)
 
