@@ -57,7 +57,7 @@ def update_profile():
             user.profile.bio = bio
             db.session.commit()
             flash('Profile Successfully Updated!', 'success')
-            return redirect(url_for('user.user_profile'))
+            return redirect(url_for('user.user_profile', user_id=user.id))
 
     return render_template('user/edit_profile.html', form=form, user=user)
 
