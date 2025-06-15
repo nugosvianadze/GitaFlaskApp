@@ -1,7 +1,7 @@
 import os
 
 from flask import render_template, redirect, Blueprint, session, url_for, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from app import Config
@@ -10,7 +10,7 @@ from app.forms.post import CreatePostForm
 from app.models.post import Post
 from app.models.user import Role, User
 
-blog_bp = Blueprint("blog", __name__, url_prefix='/blog', template_folder='templates')
+blog_bp = Blueprint("blog", __name__, url_prefix='/', template_folder='templates')
 
 
 @blog_bp.route('/add_roles')
@@ -42,11 +42,16 @@ def create_post(user_id: int):
         filename = secure_filename(image.filename)
 
         if image:
-            image.save(os.path.join(Config.UPLOAD_FOLDER, filename))
+            image_path = os.path.join(Config.UPLOAD_FOLDER, filename)
+            image.save(image_path)
+            image_url = f"uploads/{filename}"
+        else:
+            image_url = None
+
         new_post = Post(
             title=title,
             description=description,
-            image_url=os.path.join(Config.UPLOAD_FOLDER, filename) if image else None,
+            image_url=image_url,
             user_id=user_id
         )
         db.session.add(new_post)
@@ -85,10 +90,6 @@ def post_detail(post_id: int):
 @login_required
 def post_delete(post_id: int):
 
-    if 'email' not in session:
-        return redirect(url_for('user.login'))
-    email = session.get('email')
-
     post = Post.query.get(post_id)
 
     if not post:
@@ -96,7 +97,7 @@ def post_delete(post_id: int):
 
     user = post.user
 
-    if user.email != email:
+    if user.email != current_user.email:
         flash('You are not allowed to do this action!')
         return redirect(url_for('user.my_posts'))
 

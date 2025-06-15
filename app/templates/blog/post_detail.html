@@ -10,8 +10,8 @@ Post Detail
   <div class="post">
   <h1>{{ post.title }}</h1>
 
-    {% if post.image_ur %}
-    <img src="{{ post.image_url }}" class="img-fluid mb-3" alt="Post Image">
+    {% if post.image_url %}
+    <img src="{{ url_for('static', filename=post.image_url) }}" class="img-fluid mb-3" alt="Post Image">
     {% endif %}
     <p class="lead">{{ post.description }}</p>
 

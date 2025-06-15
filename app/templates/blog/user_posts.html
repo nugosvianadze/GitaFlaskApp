@@ -15,11 +15,13 @@
   width: 50%;
   padding: 10px;">
     {% for post in current_user.posts %}
-    <a href="{{ url_for('blog.post_detail', post_id=post.id) }}" class="list-group-item list-group-item-action">
+    <a href="{{ url_for('blog.post_detail', post_id=post.id) }}" class="list-group-item list-group-item-action"
+    style="text-align: center;">
       <h5 class="mb-1">{{ post.title }}</h5>
       <p class="mb-1">{{ post.description }}</p>
       {% if post.image_url != "/test" %}
-      <img src="{{ post.image_url}}" alt="{{ post.title }}" height="300" width="500">
+    <img src="{{ url_for('static', filename=post.image_url) }}"
+         class="img-fluid mb-3" alt="Post Image">
       {% endif %}
       <div style="text-align:center;">
         <small><a href="update-post.html" class="btn btn-sm btn-outline-primary">Edit</a></small>
