@@ -4,6 +4,7 @@ email_validator
 faker
 python-dotenv
 flask-migrate
+wtforms_alchemy
 wtforms-sqlalchemy
 bootstrap-flask
 flask-login
