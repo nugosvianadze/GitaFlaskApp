@@ -8,3 +8,4 @@ wtforms-sqlalchemy
 bootstrap-flask
 flask-login
 gunicorn
+flask-bcrypt
