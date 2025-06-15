@@ -7,7 +7,7 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "my_secret_key")
-    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URL", "sqlite:///my_first_db.sqlite3")
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URL", "sqlite:///blog_app.sqlite3")
     UPLOAD_FOLDER = 'static/uploads'
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
     STATIC_FOLDER = "C:\\Users\\STUDENT\\GitaFlakProjects\\GitaFlaskApp\\static"
